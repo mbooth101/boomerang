@@ -27,7 +27,6 @@ struct _BoomerangScreenshot
   GTask *task;
   GDBusConnection *conn;
 
-  char *parent_handle;
   char *object_path;
   guint signal_id;
   gulong cancelled_id;
@@ -48,9 +47,6 @@ boomerang_screenshot_init (BoomerangScreenshot *self)
 static void
 screenshot_cleanup (BoomerangScreenshot *bs)
 {
-  // TODO cleanup parent handle
-  g_free (bs->parent_handle);
-
   g_clear_signal_handler (&bs->cancelled_id, g_task_get_cancellable (bs->task));
   g_object_unref (bs->task);
 
@@ -130,11 +126,6 @@ screenshot_take_cb (GObject *object, GAsyncResult *result, gpointer data)
 static void
 screenshot_take (BoomerangScreenshot *self)
 {
-  /* set parent window handle identifier */
-  self->parent_handle = g_strdup ("");
-
-  // TODO set parent handle to something meaningful
-
   /* compute object path on which to listen for the request response signal */
   g_autofree char *token = g_strdup_printf ("boomerang_%d", g_random_int_range (0, G_MAXINT));
   g_autofree char *sender = g_strdup (g_dbus_connection_get_unique_name (self->conn) + 1);
@@ -161,9 +152,9 @@ screenshot_take (BoomerangScreenshot *self)
 
   /* create input parameters for the screenshot portal request */
   GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-  g_variant_builder_add (builder, "{sv}", "interactive", g_variant_new_boolean (TRUE));
+  g_variant_builder_add (builder, "{sv}", "interactive", g_variant_new_boolean (FALSE));
   g_variant_builder_add (builder, "{sv}", "handle_token", g_variant_new_string (token));
-  GVariant *params = g_variant_new ("(sa{sv})", self->parent_handle, builder);
+  GVariant *params = g_variant_new ("(sa{sv})", "", builder);
   g_variant_builder_unref (builder);
 
   /* https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html */
