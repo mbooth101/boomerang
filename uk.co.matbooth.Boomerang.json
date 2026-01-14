@@ -1,10 +1,13 @@
 {
     "id" : "uk.co.matbooth.Boomerang",
-    "runtime" : "org.freedesktop.Platform",
-    "runtime-version" : "25.08",
-    "sdk" : "org.freedesktop.Sdk",
+    "runtime" : "org.gnome.Platform",
+    "runtime-version" : "49",
+    "sdk" : "org.gnome.Sdk",
     "command" : "boomerang",
     "finish-args" : [
+        "--device=dri",
+        "--socket=wayland",
+        "--socket=fallback-x11"
     ],
     "cleanup" : [
         "/include",

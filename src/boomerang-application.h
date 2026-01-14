@@ -16,21 +16,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "config.h"
+#ifndef BOOMERANG_APPLICATION_H_
+#define BOOMERANG_APPLICATION_H_
 
-#include "boomerang-application.h"
+#include <gtk/gtk.h>
 
-int
-main (int argc, char **argv)
-{
-  g_autoptr (BoomerangApplication) app = g_object_new (BOOMERANG_TYPE_APPLICATION,
-                                                       "application-id", APPLICATION_ID,
-                                                       "flags", G_APPLICATION_DEFAULT_FLAGS,
-                                                       NULL);
-  char version[80];
-  g_snprintf (version, sizeof (version), "%s\n", PACKAGE_VERSION);
-  g_application_set_version (G_APPLICATION (app), version);
+G_BEGIN_DECLS
 
-  return g_application_run (G_APPLICATION (app), argc, argv);
-}
+#define BOOMERANG_TYPE_APPLICATION (boomerang_application_get_type ())
+
+G_DECLARE_FINAL_TYPE (BoomerangApplication, boomerang_application, BOOMERANG, APPLICATION, GtkApplication)
+
+G_END_DECLS
+
+#endif /* BOOMERANG_APPLICATION_H_ */
 
