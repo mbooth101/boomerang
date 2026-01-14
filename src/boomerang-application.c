@@ -17,14 +17,17 @@
  */
 
 #include "boomerang-application.h"
+#include "boomerang-canvas.h"
 #include "boomerang-screenshot.h"
 
 struct _BoomerangApplication
 {
   GtkApplication parent_instance;
 
-  GtkWidget *window;
   BoomerangScreenshot *screenshot;
+
+  GtkWidget *window;
+  GtkWidget *canvas;
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangApplication, boomerang_application, GTK_TYPE_APPLICATION)
@@ -70,6 +73,14 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
     }
 
   self->window = gtk_application_window_new (GTK_APPLICATION (self));
+  gtk_window_set_title (GTK_WINDOW (self->window), "Boomerang");
+  gtk_window_fullscreen (GTK_WINDOW (self->window));
+
+  self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
+  gtk_widget_set_hexpand (self->canvas, TRUE);
+  gtk_widget_set_vexpand (self->canvas, TRUE);
+  gtk_window_set_child (GTK_WINDOW (self->window), self->canvas);
+
   gtk_window_present (GTK_WINDOW (self->window));
 
   g_application_release (G_APPLICATION (self));

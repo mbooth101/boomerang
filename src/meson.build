@@ -1,6 +1,7 @@
 boomerang_sources = [
   'main.c',
   'boomerang-application.c',
+  'boomerang-canvas.c',
   'boomerang-screenshot.c',
 ]
 
