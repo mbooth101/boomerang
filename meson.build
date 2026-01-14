@@ -4,6 +4,7 @@ project('boomerang', 'c',
   default_options: [ 'warning_level=2', 'werror=false', 'c_std=gnu11', ],
 )
 
+gnome = import('gnome')
 cc = meson.get_compiler('c')
 
 config_h = configuration_data()
