@@ -35,16 +35,6 @@ struct _BoomerangScreenshot
 G_DEFINE_FINAL_TYPE (BoomerangScreenshot, boomerang_screenshot, G_TYPE_OBJECT)
 
 static void
-boomerang_screenshot_class_init (BoomerangScreenshotClass *klass)
-{
-}
-
-static void
-boomerang_screenshot_init (BoomerangScreenshot *self)
-{
-}
-
-static void
 screenshot_cleanup (BoomerangScreenshot *bs)
 {
   g_clear_signal_handler (&bs->cancelled_id, g_task_get_cancellable (bs->task));
@@ -164,6 +154,16 @@ screenshot_take (BoomerangScreenshot *self)
                           "Screenshot", params, G_VARIANT_TYPE ("(o)"),
                           G_DBUS_CALL_FLAGS_NONE, -1,
                           NULL, screenshot_take_cb, self);
+}
+
+static void
+boomerang_screenshot_class_init (BoomerangScreenshotClass *klass)
+{
+}
+
+static void
+boomerang_screenshot_init (BoomerangScreenshot *self)
+{
 }
 
 void

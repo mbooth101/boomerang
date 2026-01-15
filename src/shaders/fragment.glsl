@@ -1,8 +1,12 @@
 #version 300 es
 precision mediump float;
 
+in vec2 textureCoord;
+
 out vec4 fragColor;
 
+uniform sampler2D screenshotTexture;
+
 void main() {
-  fragColor = vec4(0.0, 0.58, 0.86, 1.0);
+  fragColor = texture(screenshotTexture, textureCoord);
 }

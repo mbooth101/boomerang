@@ -24,7 +24,10 @@ struct _BoomerangCanvas
 {
   GtkGLArea parent_instance;
 
+  char *filename;
+
   GLuint program;
+  GLuint texture;
   GLuint vao;
   GLuint vbo;
 
@@ -33,11 +36,15 @@ struct _BoomerangCanvas
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
 
-/* two triangles that cover the entire viewport, given here in vec2s */
+/* two triangles that cover the entire viewport, given here as (x,y,u,v) tuples */
 static const GLfloat geometry[] = {
   // clang-format off
-  -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f,
-  -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f,
+  -1.0f, -1.0f, 0.0f, 1.0f, /* left bottom */
+  -1.0f,  1.0f, 0.0f, 0.0f, /* left top */
+   1.0f,  1.0f, 1.0f, 0.0f, /* right top */
+  -1.0f, -1.0f, 0.0f, 1.0f, /* left bottom */
+   1.0f,  1.0f, 1.0f, 0.0f, /* right top */
+   1.0f, -1.0f, 1.0f, 1.0f, /* right bottom */
   // clang-format on
 };
 
@@ -146,6 +153,31 @@ canvas_realize (GtkWidget *widget)
   g_bytes_unref (vertex_source);
   g_bytes_unref (fragment_source);
 
+  /* initialise texture */
+
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (self->filename, &error);
+  if (!pixbuf)
+    {
+      gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
+      g_error_free (error);
+    }
+  int width = gdk_pixbuf_get_width (pixbuf);
+  int height = gdk_pixbuf_get_height (pixbuf);
+  int channels = gdk_pixbuf_get_n_channels (pixbuf);
+  int format = (channels == 4 ? GL_RGBA : GL_RGB);
+
+  glGenTextures (1, &self->texture);
+  glActiveTexture (GL_TEXTURE0);
+  glBindTexture (GL_TEXTURE_2D, self->texture);
+  glTexImage2D (GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels (pixbuf));
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  GLint screenshot_texture_loc = glGetUniformLocation (self->program, "screenshotTexture");
+  glUniform1i (screenshot_texture_loc, self->texture);
+
+  g_object_unref (pixbuf);
+
   /* initialise geometry buffers */
 
   glGenVertexArrays (1, &self->vao);
@@ -155,10 +187,13 @@ canvas_realize (GtkWidget *widget)
   glBindBuffer (GL_ARRAY_BUFFER, self->vbo);
   glBufferData (GL_ARRAY_BUFFER, sizeof (geometry), geometry, GL_STATIC_DRAW);
 
-  GLint vertex = glGetAttribLocation (self->program, "vertex");
+  GLint poscoord = glGetAttribLocation (self->program, "posCoord");
+  GLint texcoord = glGetAttribLocation (self->program, "texCoord");
   glBindVertexArray (self->vao);
-  glVertexAttribPointer (vertex, 2, GL_FLOAT, false, 0, 0);
-  glEnableVertexAttribArray (vertex);
+  glVertexAttribPointer (poscoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 0);
+  glVertexAttribPointer (texcoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 8);
+  glEnableVertexAttribArray (poscoord);
+  glEnableVertexAttribArray (texcoord);
 }
 
 static void
@@ -172,6 +207,8 @@ canvas_unrealize (GtkWidget *widget)
     glDeleteBuffers (1, &self->vbo);
   if (self->vao)
     glDeleteVertexArrays (1, &self->vao);
+  if (self->texture)
+    glDeleteTextures (1, &self->texture);
   if (self->program)
     glDeleteProgram (self->program);
 }
@@ -216,6 +253,8 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   glClear (GL_COLOR_BUFFER_BIT);
 
   glUseProgram (self->program);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture (GL_TEXTURE_2D, self->texture);
   glBindVertexArray (self->vao);
 
   GLint projection_loc = glGetUniformLocation (self->program, "projection");
@@ -224,9 +263,6 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   // TODO update fragment uniforms
 
   glDrawArrays (GL_TRIANGLES, 0, 6);
-
-  glBindVertexArray (0);
-  glUseProgram (0);
 
   glFlush ();
 
@@ -246,5 +282,13 @@ boomerang_canvas_init (BoomerangCanvas *self)
 {
   g_signal_connect (self, "realize", G_CALLBACK (canvas_realize), NULL);
   g_signal_connect (self, "unrealize", G_CALLBACK (canvas_unrealize), NULL);
+}
+
+void
+boomerang_canvas_set_filename (BoomerangCanvas *self, const char *filename)
+{
+  g_return_if_fail (BOOMERANG_IS_CANVAS (self));
+
+  self->filename = g_strdup (filename);
 }
 

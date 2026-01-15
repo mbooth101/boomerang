@@ -52,36 +52,39 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
   GError *error = NULL;
   char *screenshot_uri = boomerang_screenshot_finish (BOOMERANG_SCREENSHOT (source), result, &error);
 
+  char *filename = NULL;
   if (screenshot_uri)
     {
-      g_print ("Screenshot URI: %s\n", screenshot_uri);
-      char *filename = g_filename_from_uri (screenshot_uri, NULL, NULL);
-      if (filename)
+      filename = g_filename_from_uri (screenshot_uri, NULL, NULL);
+      if (!filename)
         {
-          g_print ("Screenshot saved to: %s\n", filename);
-          g_free (filename);
-        }
-      else
-        {
-          g_print ("Error unable to parse URI: %s\n", screenshot_uri);
+          g_printerr ("Error: Unable to parse URI %s\n", screenshot_uri);
         }
       g_free (screenshot_uri);
     }
   else
     {
-      g_print ("Error: %s\n", error->message);
+      g_printerr ("Error: %s\n", error->message);
     }
 
-  self->window = gtk_application_window_new (GTK_APPLICATION (self));
-  gtk_window_set_title (GTK_WINDOW (self->window), "Boomerang");
-  gtk_window_fullscreen (GTK_WINDOW (self->window));
+  if (filename)
+    {
+      g_print ("Screenshot saved to: %s\n", filename);
 
-  self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
-  gtk_widget_set_hexpand (self->canvas, TRUE);
-  gtk_widget_set_vexpand (self->canvas, TRUE);
-  gtk_window_set_child (GTK_WINDOW (self->window), self->canvas);
+      self->window = gtk_application_window_new (GTK_APPLICATION (self));
+      gtk_window_set_title (GTK_WINDOW (self->window), "Boomerang");
+      gtk_window_fullscreen (GTK_WINDOW (self->window));
 
-  gtk_window_present (GTK_WINDOW (self->window));
+      self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
+      gtk_widget_set_hexpand (self->canvas, TRUE);
+      gtk_widget_set_vexpand (self->canvas, TRUE);
+      gtk_window_set_child (GTK_WINDOW (self->window), self->canvas);
+      boomerang_canvas_set_filename (BOOMERANG_CANVAS (self->canvas), filename);
+
+      gtk_window_present (GTK_WINDOW (self->window));
+
+      g_free (filename);
+    }
 
   g_application_release (G_APPLICATION (self));
 }
