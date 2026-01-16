@@ -26,12 +26,17 @@ struct _BoomerangCanvas
 
   char *filename;
 
+  int scale_factor;
+
   GLuint program;
   GLuint texture;
   GLuint vao;
   GLuint vbo;
 
+  /* shader uniforms */
   GLfloat projection[16];
+  GLint resolution[2];
+  GLint pointer[2];
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
@@ -122,9 +127,9 @@ create_program (const char *vertex_src, const char *fragment_src, GError **error
 }
 
 static void
-canvas_realize (GtkWidget *widget)
+init_rendering (GtkWidget *widget)
 {
-  BoomerangCanvas *self = BOOMERANG_CANVAS (widget);
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (widget);
 
   gtk_gl_area_make_current (GTK_GL_AREA (widget));
 
@@ -141,10 +146,10 @@ canvas_realize (GtkWidget *widget)
       "/shaders/fragment.glsl", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
 
   GError *error = NULL;
-  self->program = create_program (
+  canvas->program = create_program (
       g_bytes_get_data (vertex_source, NULL),
       g_bytes_get_data (fragment_source, NULL), &error);
-  if (!self->program)
+  if (!canvas->program)
     {
       gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
       g_error_free (error);
@@ -155,7 +160,7 @@ canvas_realize (GtkWidget *widget)
 
   /* initialise texture */
 
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (self->filename, &error);
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (canvas->filename, &error);
   if (!pixbuf)
     {
       gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
@@ -166,30 +171,30 @@ canvas_realize (GtkWidget *widget)
   int channels = gdk_pixbuf_get_n_channels (pixbuf);
   int format = (channels == 4 ? GL_RGBA : GL_RGB);
 
-  glGenTextures (1, &self->texture);
+  glGenTextures (1, &canvas->texture);
   glActiveTexture (GL_TEXTURE0);
-  glBindTexture (GL_TEXTURE_2D, self->texture);
+  glBindTexture (GL_TEXTURE_2D, canvas->texture);
   glTexImage2D (GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels (pixbuf));
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-  GLint screenshot_texture_loc = glGetUniformLocation (self->program, "screenshotTexture");
-  glUniform1i (screenshot_texture_loc, self->texture);
+  GLint screenshot_texture_loc = glGetUniformLocation (canvas->program, "screenshotTexture");
+  glUniform1i (screenshot_texture_loc, canvas->texture);
 
   g_object_unref (pixbuf);
 
   /* initialise geometry buffers */
 
-  glGenVertexArrays (1, &self->vao);
-  glBindVertexArray (self->vao);
+  glGenVertexArrays (1, &canvas->vao);
+  glBindVertexArray (canvas->vao);
 
-  glGenBuffers (1, &self->vbo);
-  glBindBuffer (GL_ARRAY_BUFFER, self->vbo);
+  glGenBuffers (1, &canvas->vbo);
+  glBindBuffer (GL_ARRAY_BUFFER, canvas->vbo);
   glBufferData (GL_ARRAY_BUFFER, sizeof (geometry), geometry, GL_STATIC_DRAW);
 
-  GLint poscoord = glGetAttribLocation (self->program, "posCoord");
-  GLint texcoord = glGetAttribLocation (self->program, "texCoord");
-  glBindVertexArray (self->vao);
+  GLint poscoord = glGetAttribLocation (canvas->program, "posCoord");
+  GLint texcoord = glGetAttribLocation (canvas->program, "texCoord");
+  glBindVertexArray (canvas->vao);
   glVertexAttribPointer (poscoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 0);
   glVertexAttribPointer (texcoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 8);
   glEnableVertexAttribArray (poscoord);
@@ -197,26 +202,53 @@ canvas_realize (GtkWidget *widget)
 }
 
 static void
+canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  /* use the scale factor to convert from widget coordinates to frame buffer coordinates */
+  canvas->pointer[0] = x * canvas->scale_factor;
+  canvas->pointer[1] = y * canvas->scale_factor;
+}
+
+static void
+canvas_realize (GtkWidget *widget)
+{
+  init_rendering (widget);
+
+  GtkEventController *motion_controller = gtk_event_controller_motion_new ();
+  gtk_widget_add_controller (widget, motion_controller);
+  g_signal_connect (motion_controller, "motion", G_CALLBACK (canvas_motion), widget);
+}
+
+static void
 canvas_unrealize (GtkWidget *widget)
 {
-  BoomerangCanvas *self = BOOMERANG_CANVAS (widget);
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (widget);
 
   gtk_gl_area_make_current (GTK_GL_AREA (widget));
 
-  if (self->vbo)
-    glDeleteBuffers (1, &self->vbo);
-  if (self->vao)
-    glDeleteVertexArrays (1, &self->vao);
-  if (self->texture)
-    glDeleteTextures (1, &self->texture);
-  if (self->program)
-    glDeleteProgram (self->program);
+  if (canvas->vbo)
+    glDeleteBuffers (1, &canvas->vbo);
+  if (canvas->vao)
+    glDeleteVertexArrays (1, &canvas->vao);
+  if (canvas->texture)
+    glDeleteTextures (1, &canvas->texture);
+  if (canvas->program)
+    glDeleteProgram (canvas->program);
 }
 
 static void
 canvas_resize (GtkGLArea *widget, int width, int height)
 {
-  BoomerangCanvas *self = BOOMERANG_CANVAS (widget);
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (widget);
+
+  canvas->resolution[0] = width;
+  canvas->resolution[1] = height;
+
+  /* this the same scale factor used by the underlying gl area widget to determine the size of the frame buffers,
+   * and therefore the dimensions passed into this function */
+  canvas->scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (widget));
 
   glViewport (0, 0, (GLint) width, (GLint) height);
 
@@ -227,38 +259,38 @@ canvas_resize (GtkGLArea *widget, int width, int height)
   GLfloat top = 1.0f;
   GLfloat near = -1.0f;
   GLfloat far = 1.0f;
-  self->projection[0] = 2.0f / (right - left);
-  self->projection[1] = 0.0f;
-  self->projection[2] = 0.0f;
-  self->projection[3] = 0.0f;
-  self->projection[4] = 0.0f;
-  self->projection[5] = 2.0f / (top - bottom);
-  self->projection[6] = 0.0f;
-  self->projection[7] = 0.0f;
-  self->projection[8] = 0.0f;
-  self->projection[9] = 0.0f;
-  self->projection[10] = -2.0f / (far - near);
-  self->projection[11] = 0.0f;
-  self->projection[12] = -(right + left) / (right - left);
-  self->projection[13] = -(top + bottom) / (top - bottom);
-  self->projection[14] = -(far + near) / (far - near);
-  self->projection[15] = 1.0f;
+  canvas->projection[0] = 2.0f / (right - left);
+  canvas->projection[1] = 0.0f;
+  canvas->projection[2] = 0.0f;
+  canvas->projection[3] = 0.0f;
+  canvas->projection[4] = 0.0f;
+  canvas->projection[5] = 2.0f / (top - bottom);
+  canvas->projection[6] = 0.0f;
+  canvas->projection[7] = 0.0f;
+  canvas->projection[8] = 0.0f;
+  canvas->projection[9] = 0.0f;
+  canvas->projection[10] = -2.0f / (far - near);
+  canvas->projection[11] = 0.0f;
+  canvas->projection[12] = -(right + left) / (right - left);
+  canvas->projection[13] = -(top + bottom) / (top - bottom);
+  canvas->projection[14] = -(far + near) / (far - near);
+  canvas->projection[15] = 1.0f;
 }
 
 static gboolean
 canvas_render (GtkGLArea *widget, GdkGLContext *context)
 {
-  BoomerangCanvas *self = BOOMERANG_CANVAS (widget);
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (widget);
 
   glClear (GL_COLOR_BUFFER_BIT);
 
-  glUseProgram (self->program);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture (GL_TEXTURE_2D, self->texture);
-  glBindVertexArray (self->vao);
+  glUseProgram (canvas->program);
+  glActiveTexture (GL_TEXTURE0);
+  glBindTexture (GL_TEXTURE_2D, canvas->texture);
+  glBindVertexArray (canvas->vao);
 
-  GLint projection_loc = glGetUniformLocation (self->program, "projection");
-  glUniformMatrix4fv (projection_loc, 1, GL_FALSE, &self->projection[0]);
+  GLint projection_loc = glGetUniformLocation (canvas->program, "projection");
+  glUniformMatrix4fv (projection_loc, 1, GL_FALSE, &canvas->projection[0]);
 
   // TODO update fragment uniforms
 
@@ -278,17 +310,17 @@ boomerang_canvas_class_init (BoomerangCanvasClass *klass)
 }
 
 static void
-boomerang_canvas_init (BoomerangCanvas *self)
+boomerang_canvas_init (BoomerangCanvas *canvas)
 {
-  g_signal_connect (self, "realize", G_CALLBACK (canvas_realize), NULL);
-  g_signal_connect (self, "unrealize", G_CALLBACK (canvas_unrealize), NULL);
+  g_signal_connect (canvas, "realize", G_CALLBACK (canvas_realize), NULL);
+  g_signal_connect (canvas, "unrealize", G_CALLBACK (canvas_unrealize), NULL);
 }
 
 void
-boomerang_canvas_set_filename (BoomerangCanvas *self, const char *filename)
+boomerang_canvas_set_filename (BoomerangCanvas *canvas, const char *filename)
 {
-  g_return_if_fail (BOOMERANG_IS_CANVAS (self));
+  g_return_if_fail (BOOMERANG_IS_CANVAS (canvas));
 
-  self->filename = g_strdup (filename);
+  canvas->filename = g_strdup (filename);
 }
 
