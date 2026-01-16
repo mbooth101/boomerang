@@ -35,8 +35,8 @@ struct _BoomerangCanvas
 
   /* shader uniforms */
   GLfloat projection[16];
-  GLint resolution[2];
-  GLint pointer[2];
+  GLfloat resolution[2];
+  GLfloat pointer[2];
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
@@ -203,6 +203,8 @@ canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpoin
   /* use the scale factor to convert from widget coordinates to frame buffer coordinates */
   canvas->pointer[0] = x * canvas->scale_factor;
   canvas->pointer[1] = y * canvas->scale_factor;
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
 }
 
 static void
@@ -218,6 +220,7 @@ canvas_realize (GtkWidget *widget)
 
   GtkEventController *motion_controller = gtk_event_controller_motion_new ();
   gtk_widget_add_controller (widget, motion_controller);
+  g_signal_connect (motion_controller, "enter", G_CALLBACK (canvas_motion), widget);
   g_signal_connect (motion_controller, "motion", G_CALLBACK (canvas_motion), widget);
 }
 
@@ -292,7 +295,11 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   GLint projection_loc = glGetUniformLocation (canvas->program, "projection");
   glUniformMatrix4fv (projection_loc, 1, GL_FALSE, &canvas->projection[0]);
 
-  // TODO update fragment uniforms
+  GLint resolution_loc = glGetUniformLocation (canvas->program, "resolution");
+  glUniform2f (resolution_loc, canvas->resolution[0], canvas->resolution[1]);
+
+  GLint pointer_loc = glGetUniformLocation (canvas->program, "pointer");
+  glUniform2f (pointer_loc, canvas->pointer[0], canvas->pointer[1]);
 
   glDrawArrays (GL_TRIANGLES, 0, 6);
 
