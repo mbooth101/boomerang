@@ -127,7 +127,7 @@ create_program (const char *vertex_src, const char *fragment_src, GError **error
 }
 
 static void
-init_rendering (GtkWidget *widget)
+init_rendering (GtkWidget *widget, GError **error)
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (widget);
 
@@ -145,27 +145,21 @@ init_rendering (GtkWidget *widget)
   GBytes *fragment_source = g_resources_lookup_data (
       "/shaders/fragment.glsl", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
 
-  GError *error = NULL;
   canvas->program = create_program (
       g_bytes_get_data (vertex_source, NULL),
-      g_bytes_get_data (fragment_source, NULL), &error);
+      g_bytes_get_data (fragment_source, NULL), error);
   if (!canvas->program)
-    {
-      gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
-      g_error_free (error);
-    }
+    return;
 
   g_bytes_unref (vertex_source);
   g_bytes_unref (fragment_source);
 
   /* initialise texture */
 
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (canvas->filename, &error);
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (canvas->filename, error);
   if (!pixbuf)
-    {
-      gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
-      g_error_free (error);
-    }
+    return;
+
   int width = gdk_pixbuf_get_width (pixbuf);
   int height = gdk_pixbuf_get_height (pixbuf);
   int channels = gdk_pixbuf_get_n_channels (pixbuf);
@@ -214,7 +208,13 @@ canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpoin
 static void
 canvas_realize (GtkWidget *widget)
 {
-  init_rendering (widget);
+  GError *error = NULL;
+  init_rendering (widget, &error);
+  if (error)
+    {
+      gtk_gl_area_set_error (GTK_GL_AREA (widget), error);
+      g_error_free (error);
+    }
 
   GtkEventController *motion_controller = gtk_event_controller_motion_new ();
   gtk_widget_add_controller (widget, motion_controller);
