@@ -19,8 +19,9 @@ void main()
 {
   vec2 pointerInvertY = vec2(pointer.x, resolution.y - pointer.y);
 
-  vec2 c = (2.0 * gl_FragCoord.xy - resolution) / resolution.y;
-  vec2 p = (2.0 * pointerInvertY - resolution) / resolution.y;
+  float divisor = min(resolution.x, resolution.y);
+  vec2 c = (2.0 * gl_FragCoord.xy - resolution) / divisor;
+  vec2 p = (2.0 * pointerInvertY - resolution) / divisor;
 
   vec3 col = texture(screenshotTexture, textureCoord).xyz;
 
