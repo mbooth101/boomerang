@@ -37,6 +37,7 @@ struct _BoomerangCanvas
   GLfloat projection[16];
   GLfloat resolution[2];
   GLfloat pointer[2];
+  GLint flashlight_enabled;
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
@@ -54,7 +55,7 @@ static const GLfloat geometry[] = {
 };
 
 static GLuint
-create_shader (int shader_type, const char *src, GError **error)
+create_shader (GLenum shader_type, const char *src, GError **error)
 {
   GLuint shader = glCreateShader (shader_type);
   glShaderSource (shader, 1, &src, NULL);
@@ -138,6 +139,8 @@ init_rendering (GtkWidget *widget, GError **error)
   glCullFace (GL_BACK);
   glEnable (GL_CULL_FACE);
 
+  canvas->flashlight_enabled = 0;
+
   /* initialise shader program */
 
   GBytes *vertex_source = g_resources_lookup_data (
@@ -208,6 +211,19 @@ canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpoin
 }
 
 static void
+canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  if (keyval == GDK_KEY_f)
+    {
+      canvas->flashlight_enabled = canvas->flashlight_enabled ? 0 : 1;
+    }
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
+}
+
+static void
 canvas_realize (GtkWidget *widget)
 {
   GError *error = NULL;
@@ -222,6 +238,10 @@ canvas_realize (GtkWidget *widget)
   gtk_widget_add_controller (widget, motion_controller);
   g_signal_connect (motion_controller, "enter", G_CALLBACK (canvas_motion), widget);
   g_signal_connect (motion_controller, "motion", G_CALLBACK (canvas_motion), widget);
+
+  GtkEventController *key_controller = gtk_event_controller_key_new ();
+  gtk_widget_add_controller (widget, key_controller);
+  g_signal_connect (key_controller, "key-pressed", G_CALLBACK (canvas_key_pressed), widget);
 }
 
 static void
@@ -300,6 +320,9 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
 
   GLint pointer_loc = glGetUniformLocation (canvas->program, "pointer");
   glUniform2f (pointer_loc, canvas->pointer[0], canvas->pointer[1]);
+
+  GLint fenabled_loc = glGetUniformLocation (canvas->program, "fenabled");
+  glUniform1i (fenabled_loc, canvas->flashlight_enabled);
 
   glDrawArrays (GL_TRIANGLES, 0, 6);
 

@@ -7,6 +7,7 @@ out vec4 fragColor;
 uniform sampler2D screenshotTexture;
 uniform vec2 resolution;
 uniform vec2 pointer;
+uniform bool fenabled;
 
 /* signed distance function for the flashlight vignette */
 float flashlight(in vec2 point, in float radius)
@@ -24,8 +25,8 @@ void main()
   vec3 col = texture(screenshotTexture, textureCoord).xyz;
 
   /* dim everything outside the flashlight area */
-  float d = flashlight(c - p, 0.5);
-  col = (d < 0.0) ? col : col * 0.5;
+  float d = (fenabled ? flashlight(c - p, 0.5) : 0.0);
+  col = (d <= 0.0) ? col : col * 0.5;
 
   fragColor = vec4(col, 1.0);
 }

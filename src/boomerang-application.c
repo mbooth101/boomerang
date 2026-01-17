@@ -76,6 +76,7 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
       gtk_window_fullscreen (GTK_WINDOW (self->window));
 
       self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
+      gtk_widget_set_focusable (self->canvas, TRUE);
       gtk_widget_set_hexpand (self->canvas, TRUE);
       gtk_widget_set_vexpand (self->canvas, TRUE);
       gtk_window_set_child (GTK_WINDOW (self->window), self->canvas);
