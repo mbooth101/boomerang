@@ -129,6 +129,6 @@ static void
 boomerang_application_init (BoomerangApplication *self)
 {
   g_action_map_add_action_entries (G_ACTION_MAP (self), app_actions, G_N_ELEMENTS (app_actions), self);
-  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", (const char *[]) { "<control>q", NULL });
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
 }
 
