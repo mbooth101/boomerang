@@ -201,6 +201,16 @@ init_rendering (GtkWidget *widget, GError **error)
 }
 
 static void
+canvas_scroll_up (void)
+{
+}
+
+static void
+canvas_scroll_down (void)
+{
+}
+
+static void
 canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpointer data)
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
@@ -212,6 +222,16 @@ canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpoin
   gtk_gl_area_queue_render (GTK_GL_AREA (data));
 }
 
+static gboolean
+canvas_scroll (GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer data)
+{
+  if (dy > 0)
+    canvas_scroll_down ();
+  if (dy < 0)
+    canvas_scroll_up ();
+  return TRUE;
+}
+
 static void
 canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer data)
 {
@@ -221,6 +241,10 @@ canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keyco
     {
       canvas->flashlight_enabled = canvas->flashlight_enabled ? 0 : 1;
     }
+  if (keyval == GDK_KEY_equal)
+    canvas_scroll_up ();
+  if (keyval == GDK_KEY_minus)
+    canvas_scroll_down ();
 
   gtk_gl_area_queue_render (GTK_GL_AREA (data));
 }
@@ -240,6 +264,10 @@ canvas_realize (GtkWidget *widget)
   gtk_widget_add_controller (widget, motion_controller);
   g_signal_connect (motion_controller, "enter", G_CALLBACK (canvas_motion), widget);
   g_signal_connect (motion_controller, "motion", G_CALLBACK (canvas_motion), widget);
+
+  GtkEventController *scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
+  gtk_widget_add_controller (widget, scroll_controller);
+  g_signal_connect (scroll_controller, "scroll", G_CALLBACK (canvas_scroll), widget);
 
   GtkEventController *key_controller = gtk_event_controller_key_new ();
   gtk_widget_add_controller (widget, key_controller);
