@@ -38,6 +38,7 @@ struct _BoomerangCanvas
   GLfloat resolution[2];
   GLfloat pointer[2];
   GLint flashlight_enabled;
+  GLfloat flashlight_radius;
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
@@ -140,6 +141,7 @@ init_rendering (GtkWidget *widget, GError **error)
   glEnable (GL_CULL_FACE);
 
   canvas->flashlight_enabled = 0;
+  canvas->flashlight_radius = 0.3;
 
   /* initialise shader program */
 
@@ -323,6 +325,9 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
 
   GLint fenabled_loc = glGetUniformLocation (canvas->program, "fenabled");
   glUniform1i (fenabled_loc, canvas->flashlight_enabled);
+
+  GLint fradius_loc = glGetUniformLocation (canvas->program, "fradius");
+  glUniform1f (fradius_loc, canvas->flashlight_radius);
 
   glDrawArrays (GL_TRIANGLES, 0, 6);
 

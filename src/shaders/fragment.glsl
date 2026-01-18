@@ -8,26 +8,28 @@ uniform sampler2D screenshotTexture;
 uniform vec2 resolution;
 uniform vec2 pointer;
 uniform bool fenabled;
-
-/* signed distance function for the flashlight vignette */
-float flashlight(in vec2 point, in float radius)
-{
-  return length(point) - radius;
-}
+uniform float fradius;
 
 void main()
 {
   vec2 pointerInvertY = vec2(pointer.x, resolution.y - pointer.y);
 
+  /* fragment coord (c) and mouse pointer (p) as normalised device coordinates */
   float divisor = min(resolution.x, resolution.y);
   vec2 c = (2.0 * gl_FragCoord.xy - resolution) / divisor;
   vec2 p = (2.0 * pointerInvertY - resolution) / divisor;
 
-  vec3 col = texture(screenshotTexture, textureCoord).xyz;
+  /* generate a blending factor gradient along the edge of the flashlight area, to
+   * give an anti-aliased appearance to the edge of the vignette */
+  float dist = distance(c, p);
+  float delta = fwidth(dist) * 2.5;
+  float alpha = smoothstep(fradius - delta, fradius + delta, dist);
 
-  /* dim everything outside the flashlight area */
-  float d = (fenabled ? flashlight(c - p, 0.5) : 0.0);
-  col = (d <= 0.0) ? col : col * 0.5;
+  /* blend only when the flashlight is enabled, and clamp the factor to something less
+   * than one so the vignette is always slightly transparent */
+  float blend = fenabled ? min(alpha, 0.6) : 0.0;
 
-  fragColor = vec4(col, 1.0);
+  vec4 screenshot = texture(screenshotTexture, textureCoord);
+  vec4 vignette = vec4(0.0, 0.0, 0.0, 1.0);
+  fragColor = mix(screenshot, vignette, blend);
 }
