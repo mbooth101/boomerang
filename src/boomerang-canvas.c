@@ -20,6 +20,8 @@
 
 #include <epoxy/gl.h>
 
+#define FL_RADIUS_INCREMENT 0.05
+
 struct _BoomerangCanvas
 {
   GtkGLArea parent_instance;
@@ -27,6 +29,8 @@ struct _BoomerangCanvas
   char *filename;
 
   int scale_factor;
+
+  bool flashlight_zoom;
 
   GLuint program;
   GLuint texture;
@@ -140,6 +144,7 @@ init_rendering (GtkWidget *widget, GError **error)
   glCullFace (GL_BACK);
   glEnable (GL_CULL_FACE);
 
+  canvas->flashlight_zoom = false;
   canvas->flashlight_enabled = 0;
   canvas->flashlight_radius = 0.3;
 
@@ -201,13 +206,14 @@ init_rendering (GtkWidget *widget, GError **error)
 }
 
 static void
-canvas_scroll_up (void)
+canvas_zoom (BoomerangCanvas *canvas, int direction)
 {
-}
-
-static void
-canvas_scroll_down (void)
-{
+  if (canvas->flashlight_zoom)
+    {
+      canvas->flashlight_radius += FL_RADIUS_INCREMENT * direction;
+      if (canvas->flashlight_radius <= FL_RADIUS_INCREMENT)
+        canvas->flashlight_radius = FL_RADIUS_INCREMENT;
+    }
 }
 
 static void
@@ -225,10 +231,11 @@ canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpoin
 static gboolean
 canvas_scroll (GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer data)
 {
-  if (dy > 0)
-    canvas_scroll_down ();
-  if (dy < 0)
-    canvas_scroll_up ();
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  canvas_zoom (canvas, -dy);
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
   return TRUE;
 }
 
@@ -237,16 +244,28 @@ canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keyco
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
 
+  /* holding ctrl zooms the flashlight area instead of the screenshot */
+  if (keyval == GDK_KEY_Control_L || keyval == GDK_KEY_Control_R)
+    canvas->flashlight_zoom = true;
+
   if (keyval == GDK_KEY_f)
-    {
-      canvas->flashlight_enabled = canvas->flashlight_enabled ? 0 : 1;
-    }
+    canvas->flashlight_enabled = canvas->flashlight_enabled ? 0 : 1;
+
   if (keyval == GDK_KEY_equal)
-    canvas_scroll_up ();
+    canvas_zoom (canvas, 1);
   if (keyval == GDK_KEY_minus)
-    canvas_scroll_down ();
+    canvas_zoom (canvas, -1);
 
   gtk_gl_area_queue_render (GTK_GL_AREA (data));
+}
+
+static void
+canvas_key_released (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  if (keyval == GDK_KEY_Control_L || keyval == GDK_KEY_Control_R)
+    canvas->flashlight_zoom = false;
 }
 
 static void
@@ -272,6 +291,7 @@ canvas_realize (GtkWidget *widget)
   GtkEventController *key_controller = gtk_event_controller_key_new ();
   gtk_widget_add_controller (widget, key_controller);
   g_signal_connect (key_controller, "key-pressed", G_CALLBACK (canvas_key_pressed), widget);
+  g_signal_connect (key_controller, "key-released", G_CALLBACK (canvas_key_released), widget);
 }
 
 static void
