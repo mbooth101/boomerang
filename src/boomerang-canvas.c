@@ -60,10 +60,17 @@ static const GLfloat geometry[] = {
 };
 
 static GLuint
-create_shader (GLenum shader_type, const char *src, GError **error)
+create_shader (GLenum shader_type, const char *shader_path, GError **error)
 {
+  GBytes *shader_source = g_resources_lookup_data (shader_path, G_RESOURCE_LOOKUP_FLAGS_NONE, error);
+  if (shader_source == NULL)
+    return 0;
+
   GLuint shader = glCreateShader (shader_type);
+  const char *src = g_bytes_get_data (shader_source, NULL);
   glShaderSource (shader, 1, &src, NULL);
+  g_bytes_unref (shader_source);
+
   glCompileShader (shader);
 
   GLint compile_status;
@@ -88,15 +95,15 @@ create_shader (GLenum shader_type, const char *src, GError **error)
 }
 
 static GLuint
-create_program (const char *vertex_src, const char *fragment_src, GError **error)
+create_program (const char *vertex_path, const char *fragment_path, GError **error)
 {
-  GLuint vertex = create_shader (GL_VERTEX_SHADER, vertex_src, error);
+  GLuint vertex = create_shader (GL_VERTEX_SHADER, vertex_path, error);
   if (!vertex)
     {
       return 0;
     }
 
-  GLuint fragment = create_shader (GL_FRAGMENT_SHADER, fragment_src, error);
+  GLuint fragment = create_shader (GL_FRAGMENT_SHADER, fragment_path, error);
   if (!fragment)
     {
       glDeleteShader (vertex);
@@ -127,9 +134,35 @@ create_program (const char *vertex_src, const char *fragment_src, GError **error
       return 0;
     }
 
+  /* we can delete these now because the program will retain a reference to them until the program itself is deleted */
   glDeleteShader (vertex);
   glDeleteShader (fragment);
   return program;
+}
+
+static GLuint
+create_texture (const char *texture_path, GError **error)
+{
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (texture_path, error);
+  if (pixbuf == NULL)
+    return 0;
+
+  int width = gdk_pixbuf_get_width (pixbuf);
+  int height = gdk_pixbuf_get_height (pixbuf);
+  int channels = gdk_pixbuf_get_n_channels (pixbuf);
+  int format = (channels == 4 ? GL_RGBA : GL_RGB);
+
+  GLuint texture = 0;
+  glGenTextures (1, &texture);
+  glActiveTexture (GL_TEXTURE0);
+  glBindTexture (GL_TEXTURE_2D, texture);
+  glTexImage2D (GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels (pixbuf));
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  g_object_unref (pixbuf);
+
+  return texture;
 }
 
 static void
@@ -150,42 +183,18 @@ init_rendering (GtkWidget *widget, GError **error)
 
   /* initialise shader program */
 
-  GBytes *vertex_source = g_resources_lookup_data (
-      "/shaders/vertex.glsl", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-  GBytes *fragment_source = g_resources_lookup_data (
-      "/shaders/fragment.glsl", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-
-  canvas->program = create_program (
-      g_bytes_get_data (vertex_source, NULL),
-      g_bytes_get_data (fragment_source, NULL), error);
+  canvas->program = create_program ("/shaders/vertex.glsl", "/shaders/fragment.glsl", error);
   if (!canvas->program)
     return;
 
-  g_bytes_unref (vertex_source);
-  g_bytes_unref (fragment_source);
-
   /* initialise texture */
 
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file (canvas->filename, error);
-  if (!pixbuf)
+  canvas->texture = create_texture (canvas->filename, error);
+  if (!canvas->texture)
     return;
-
-  int width = gdk_pixbuf_get_width (pixbuf);
-  int height = gdk_pixbuf_get_height (pixbuf);
-  int channels = gdk_pixbuf_get_n_channels (pixbuf);
-  int format = (channels == 4 ? GL_RGBA : GL_RGB);
-
-  glGenTextures (1, &canvas->texture);
-  glActiveTexture (GL_TEXTURE0);
-  glBindTexture (GL_TEXTURE_2D, canvas->texture);
-  glTexImage2D (GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels (pixbuf));
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   GLint screenshot_texture_loc = glGetUniformLocation (canvas->program, "screenshotTexture");
   glUniform1i (screenshot_texture_loc, canvas->texture);
-
-  g_object_unref (pixbuf);
 
   /* initialise geometry buffers */
 
