@@ -332,9 +332,9 @@ canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keyco
   if (keyval == GDK_KEY_f)
     canvas->flashlight_enabled = canvas->flashlight_enabled ? 0 : 1;
 
-  if (keyval == GDK_KEY_equal)
+  if (keyval == GDK_KEY_equal || keyval == GDK_KEY_plus)
     canvas_zoom (canvas, 1);
-  if (keyval == GDK_KEY_minus)
+  if (keyval == GDK_KEY_minus || keyval == GDK_KEY_underscore)
     canvas_zoom (canvas, -1);
 
   if (keyval == GDK_KEY_F12)
