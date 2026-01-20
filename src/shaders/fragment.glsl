@@ -10,6 +10,11 @@ uniform vec2 pointer;
 uniform bool fenabled;
 uniform float fradius;
 
+/* debug output */
+uniform bool debugging;
+uniform float fradiusStart;
+uniform float fradiusTarget;
+
 void main()
 {
   vec2 pointerInvertY = vec2(pointer.x, resolution.y - pointer.y);
@@ -31,5 +36,14 @@ void main()
 
   vec4 screenshot = texture(screenshotTexture, textureCoord);
   vec4 vignette = vec4(0.0, 0.0, 0.0, 1.0);
-  fragColor = mix(screenshot, vignette, blend);
+  vec4 col = mix(screenshot, vignette, blend);
+
+  vec4 startIndicator = vec4(0.0, 1.0, 0.0, 1.0);
+  vec4 targetIndicator = vec4(1.0, 0.0, 0.0, 1.0);
+  float start = float(debugging && length(c - p) >= fradiusStart - 0.0005 && length(c - p) <= fradiusStart + 0.0005);
+  float target = float(debugging && length(c - p) >= fradiusTarget - 0.0005 && length(c - p) <= fradiusTarget + 0.0005);
+
+  col = mix(col, targetIndicator, target);
+  col = mix(col, startIndicator, start);
+  fragColor = col;
 }

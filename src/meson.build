@@ -15,8 +15,9 @@ boomerang_deps = [
   dependency('epoxy'),
 ]
 
+m_dep = cc.find_library('m', required : false)
+
 executable('boomerang', boomerang_sources,
-  dependencies: boomerang_deps,
+  dependencies: [ boomerang_deps, m_dep ],
   install: true,
 )
-
