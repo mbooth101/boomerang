@@ -20,9 +20,6 @@
 
 #include <epoxy/gl.h>
 
-#define ZOOM_INCREMENT 0.1
-#define FL_RADIUS_INCREMENT 0.05
-
 typedef struct _Animatable Animatable;
 struct _Animatable
 {
@@ -287,16 +284,15 @@ static void
 canvas_zoom (BoomerangCanvas *canvas, int direction)
 {
   Animatable *animation = &canvas->zoom_level;
-  float increment = ZOOM_INCREMENT;
   float min = 1.0;
   float max = 10.0;
   if (canvas->flashlight_zoom)
     {
-      increment = FL_RADIUS_INCREMENT;
-      min = FL_RADIUS_INCREMENT;
+      min = 0.05;
       animation = &canvas->flashlight_radius;
     }
 
+  float increment = animation->value * 0.1;
   animation->accum_seconds = 0;
   animation->start = animation->value;
   animation->target += increment * direction;
@@ -461,6 +457,9 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
 
   GLint projection_loc = glGetUniformLocation (canvas->program, "projection");
   glUniformMatrix4fv (projection_loc, 1, GL_FALSE, &canvas->projection[0]);
+
+  GLint zoom_level_loc = glGetUniformLocation (canvas->program, "zoomLevel");
+  glUniform1f (zoom_level_loc, canvas->zoom_level.value);
 
   GLint resolution_loc = glGetUniformLocation (canvas->program, "resolution");
   glUniform2f (resolution_loc, canvas->resolution[0], canvas->resolution[1]);
