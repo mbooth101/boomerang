@@ -20,7 +20,19 @@
 
 #include <epoxy/gl.h>
 
+#define ZOOM_INCREMENT 0.1
 #define FL_RADIUS_INCREMENT 0.05
+
+typedef struct _Animatable Animatable;
+struct _Animatable
+{
+  guint id;
+  GLfloat value;
+  GLfloat start;
+  GLfloat target;
+  double accum_seconds;
+  int64_t last_time;
+};
 
 struct _BoomerangCanvas
 {
@@ -43,13 +55,10 @@ struct _BoomerangCanvas
   GLfloat resolution[2];
   GLfloat pointer[2];
   GLint flashlight_enabled;
-  GLfloat flashlight_radius;
-  GLfloat flashlight_radius_start;
-  GLfloat flashlight_radius_target;
 
   /* animation state */
-  guint animation;
-  double accum_seconds;
+  Animatable flashlight_radius;
+  Animatable zoom_level;
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, GTK_TYPE_GL_AREA)
@@ -186,7 +195,8 @@ init_rendering (GtkWidget *widget, GError **error)
 
   canvas->flashlight_zoom = false;
   canvas->flashlight_enabled = 0;
-  canvas->flashlight_radius = canvas->flashlight_radius_start = canvas->flashlight_radius_target = 0.3;
+  canvas->flashlight_radius = (Animatable) { .value = 0.3, .start = 0.3, .target = 0.3};
+  canvas->zoom_level = (Animatable) { .value = 1.0, .start = 1.0, .target = 1.0};
 
   /* initialise shader program */
 
@@ -229,71 +239,74 @@ ease_out_cubic (double timestep)
 }
 
 static gboolean
-canvas_animate_flashlight_radius (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer data)
+canvas_animate_value (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer data)
 {
-  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+  Animatable *animation = (Animatable *) data;
 
   gboolean done = G_SOURCE_REMOVE;
 
   /* calculate the time since last frame and add it to the accumulated time since the start of the animation */
   int64_t current_time = gdk_frame_clock_get_frame_time (frame_clock);
-  static int64_t last_time;
   double delta_seconds = 0.0;
-  if (last_time > 0)
+  if (animation->last_time > 0)
     {
-      delta_seconds = (current_time - last_time) / 1000000.0;
+      delta_seconds = (current_time - animation->last_time) / 1000000.0;
     }
-  last_time = current_time;
-  canvas->accum_seconds += delta_seconds;
+  animation->last_time = current_time;
+  animation->accum_seconds += delta_seconds;
 
-  if (canvas->accum_seconds < 0.5)
+  if (animation->accum_seconds < 0.5)
     {
-      float direction = canvas->flashlight_radius_target > canvas->flashlight_radius ? 1.0 : -1.0;
-      float difference = fabsf (canvas->flashlight_radius_target - canvas->flashlight_radius_start);
-      float progress = difference * ease_out_cubic (canvas->accum_seconds * 2) * direction;
+      float direction = animation->target > animation->value ? 1.0 : -1.0;
+      float difference = fabsf (animation->target - animation->start);
+      float progress = difference * ease_out_cubic (animation->accum_seconds * 2) * direction;
 
-      canvas->flashlight_radius = canvas->flashlight_radius_start + progress;
+      animation->value = animation->start + progress;
 
       done = G_SOURCE_CONTINUE;
     }
   else
     {
       /* animation has finished */
-      canvas->flashlight_radius = canvas->flashlight_radius_target;
-      last_time = 0;
+      animation->value = animation->target;
+      animation->last_time = 0;
     }
 
-  gtk_gl_area_queue_render (GTK_GL_AREA (canvas));
+  gtk_gl_area_queue_render (GTK_GL_AREA (widget));
   return done;
 }
 
 static void
-canvas_animate_flashlight_radius_end (gpointer data)
+canvas_animate_value_end (gpointer data)
 {
-  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
-
-  canvas->animation = 0;
-  canvas->accum_seconds = 0.0;
+  Animatable *animation = (Animatable *) data;
+  animation->id = 0;
 }
 
 static void
 canvas_zoom (BoomerangCanvas *canvas, int direction)
 {
+  Animatable *animation = &canvas->zoom_level;
+  float increment = ZOOM_INCREMENT;
+  float min = 1.0;
+  float max = 10.0;
   if (canvas->flashlight_zoom)
     {
-      canvas->accum_seconds = 0;
-      canvas->flashlight_radius_target += FL_RADIUS_INCREMENT * direction;
-      canvas->flashlight_radius_start = canvas->flashlight_radius;
-      if (canvas->flashlight_radius_target <= FL_RADIUS_INCREMENT)
-        canvas->flashlight_radius_target = FL_RADIUS_INCREMENT;
+      increment = FL_RADIUS_INCREMENT;
+      min = FL_RADIUS_INCREMENT;
+      animation = &canvas->flashlight_radius;
+    }
 
-      if (!canvas->animation &&
-          canvas->flashlight_radius_target != canvas->flashlight_radius_start)
-        {
-          canvas->animation = gtk_widget_add_tick_callback (
-              GTK_WIDGET (canvas), canvas_animate_flashlight_radius, canvas,
-              canvas_animate_flashlight_radius_end);
-        }
+  animation->accum_seconds = 0;
+  animation->start = animation->value;
+  animation->target += increment * direction;
+  animation->target = fmaxf (animation->target, min);
+  animation->target = fminf (animation->target, max);
+
+  if (!animation->id && animation->target != animation->start)
+    {
+      animation->id = gtk_widget_add_tick_callback (
+          GTK_WIDGET (canvas), canvas_animate_value, animation, canvas_animate_value_end);
     }
 }
 
@@ -459,16 +472,16 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   glUniform1i (fenabled_loc, canvas->flashlight_enabled);
 
   GLint fradius_loc = glGetUniformLocation (canvas->program, "fradius");
-  glUniform1f (fradius_loc, canvas->flashlight_radius);
+  glUniform1f (fradius_loc, canvas->flashlight_radius.value);
 
   GLint debugging_loc = glGetUniformLocation (canvas->program, "debugging");
   glUniform1i (debugging_loc, canvas->debugging);
 
   GLint fradius_start_loc = glGetUniformLocation (canvas->program, "fradiusStart");
-  glUniform1f (fradius_start_loc, canvas->flashlight_radius_start);
+  glUniform1f (fradius_start_loc, canvas->flashlight_radius.start);
 
   GLint fradius_target_loc = glGetUniformLocation (canvas->program, "fradiusTarget");
-  glUniform1f (fradius_target_loc, canvas->flashlight_radius_target);
+  glUniform1f (fradius_target_loc, canvas->flashlight_radius.target);
 
   glDrawArrays (GL_TRIANGLES, 0, 6);
 
