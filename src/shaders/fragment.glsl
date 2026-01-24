@@ -17,12 +17,10 @@ uniform float fradiusTarget;
 
 void main()
 {
-  vec2 pointerInvertY = vec2(pointer.x, resolution.y - pointer.y);
-
   /* fragment coord (c) and mouse pointer (p) as normalised device coordinates */
   float divisor = min(resolution.x, resolution.y);
   vec2 c = (2.0 * gl_FragCoord.xy - resolution) / divisor;
-  vec2 p = (2.0 * pointerInvertY - resolution) / divisor;
+  vec2 p = (2.0 * pointer - resolution) / divisor;
 
   /* generate a blending factor gradient along the edge of the flashlight area, to
    * give an anti-aliased appearance to the edge of the vignette */
@@ -40,8 +38,8 @@ void main()
 
   vec4 startIndicator = vec4(0.0, 1.0, 0.0, 1.0);
   vec4 targetIndicator = vec4(1.0, 0.0, 0.0, 1.0);
-  float start = float(debugging && length(c - p) >= fradiusStart - 0.0005 && length(c - p) <= fradiusStart + 0.0005);
-  float target = float(debugging && length(c - p) >= fradiusTarget - 0.0005 && length(c - p) <= fradiusTarget + 0.0005);
+  float start = float(debugging && fenabled && length(c - p) >= fradiusStart - 0.0005 && length(c - p) <= fradiusStart + 0.0005);
+  float target = float(debugging && fenabled && length(c - p) >= fradiusTarget - 0.0005 && length(c - p) <= fradiusTarget + 0.0005);
 
   col = mix(col, targetIndicator, target);
   col = mix(col, startIndicator, start);

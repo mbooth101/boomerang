@@ -39,6 +39,9 @@ struct _BoomerangCanvas
 
   int scale_factor;
 
+  double drag_offset[2];
+  double drag_total[2];
+
   bool flashlight_zoom;
 
   GLuint program;
@@ -192,8 +195,8 @@ init_rendering (GtkWidget *widget, GError **error)
 
   canvas->flashlight_zoom = false;
   canvas->flashlight_enabled = 0;
-  canvas->flashlight_radius = (Animatable) { .value = 0.3, .start = 0.3, .target = 0.3};
-  canvas->zoom_level = (Animatable) { .value = 1.0, .start = 1.0, .target = 1.0};
+  canvas->flashlight_radius = (Animatable) { .value = 0.3, .start = 0.3, .target = 0.3 };
+  canvas->zoom_level = (Animatable) { .value = 1.0, .start = 1.0, .target = 1.0 };
 
   /* initialise shader program */
 
@@ -306,18 +309,6 @@ canvas_zoom (BoomerangCanvas *canvas, int direction)
     }
 }
 
-static void
-canvas_motion (GtkEventControllerMotion *controller, gdouble x, gdouble y, gpointer data)
-{
-  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
-
-  /* use the scale factor to convert from widget coordinates to frame buffer coordinates */
-  canvas->pointer[0] = x * canvas->scale_factor;
-  canvas->pointer[1] = y * canvas->scale_factor;
-
-  gtk_gl_area_queue_render (GTK_GL_AREA (data));
-}
-
 static gboolean
 canvas_scroll (GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer data)
 {
@@ -362,6 +353,45 @@ canvas_key_released (GtkEventControllerKey *controller, guint keyval, guint keyc
 }
 
 static void
+canvas_motion (GtkEventControllerMotion *controller, double x, double y, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  /* use the scale factor to convert from widget coordinates to frame buffer coordinates */
+  canvas->pointer[0] = x * canvas->scale_factor;
+  canvas->pointer[1] = y * canvas->scale_factor;
+
+  /* widget coordinates have an inverted y-axis compared to the viewport */
+  canvas->pointer[1] = canvas->resolution[1] - canvas->pointer[1];
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
+}
+
+static void
+canvas_drag_update (GtkGestureDrag *gesture, double offset_x, double offset_y, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  canvas->drag_offset[0] = offset_x * canvas->scale_factor;
+  canvas->drag_offset[1] = offset_y * canvas->scale_factor * -1.0;
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
+}
+
+static void
+canvas_drag_end (GtkGestureDrag *gesture, double offset_x, double offset_y, gpointer data)
+{
+  BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
+
+  canvas->drag_total[0] += offset_x * canvas->scale_factor;
+  canvas->drag_total[1] += offset_y * canvas->scale_factor * -1.0;
+  canvas->drag_offset[0] = 0.0;
+  canvas->drag_offset[1] = 0.0;
+
+  gtk_gl_area_queue_render (GTK_GL_AREA (data));
+}
+
+static void
 canvas_realize (GtkWidget *widget)
 {
   GError *error = NULL;
@@ -376,6 +406,11 @@ canvas_realize (GtkWidget *widget)
   gtk_widget_add_controller (widget, motion_controller);
   g_signal_connect (motion_controller, "enter", G_CALLBACK (canvas_motion), widget);
   g_signal_connect (motion_controller, "motion", G_CALLBACK (canvas_motion), widget);
+
+  GtkGesture *drag_gesture = gtk_gesture_drag_new ();
+  gtk_widget_add_controller (widget, GTK_EVENT_CONTROLLER (drag_gesture));
+  g_signal_connect (drag_gesture, "drag-update", G_CALLBACK (canvas_drag_update), widget);
+  g_signal_connect (drag_gesture, "drag-end", G_CALLBACK (canvas_drag_end), widget);
 
   GtkEventController *scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
   gtk_widget_add_controller (widget, scroll_controller);
@@ -458,11 +493,14 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   GLint projection_loc = glGetUniformLocation (canvas->program, "projection");
   glUniformMatrix4fv (projection_loc, 1, GL_FALSE, &canvas->projection[0]);
 
-  GLint zoom_level_loc = glGetUniformLocation (canvas->program, "zoomLevel");
-  glUniform1f (zoom_level_loc, canvas->zoom_level.value);
-
   GLint resolution_loc = glGetUniformLocation (canvas->program, "resolution");
   glUniform2f (resolution_loc, canvas->resolution[0], canvas->resolution[1]);
+
+  GLint drag_pos_loc = glGetUniformLocation (canvas->program, "dragPosition");
+  glUniform2f (drag_pos_loc, canvas->drag_total[0] + canvas->drag_offset[0], canvas->drag_total[1] + canvas->drag_offset[1]);
+
+  GLint zoom_level_loc = glGetUniformLocation (canvas->program, "zoomLevel");
+  glUniform1f (zoom_level_loc, canvas->zoom_level.value);
 
   GLint pointer_loc = glGetUniformLocation (canvas->program, "pointer");
   glUniform2f (pointer_loc, canvas->pointer[0], canvas->pointer[1]);
@@ -472,6 +510,8 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
 
   GLint fradius_loc = glGetUniformLocation (canvas->program, "fradius");
   glUniform1f (fradius_loc, canvas->flashlight_radius.value);
+
+  /* below here uniforms used only for shader debugging */
 
   GLint debugging_loc = glGetUniformLocation (canvas->program, "debugging");
   glUniform1i (debugging_loc, canvas->debugging);
