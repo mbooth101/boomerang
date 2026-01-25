@@ -238,6 +238,9 @@ ease_out_cubic (double timestep)
   return 1 - pow (1 - timestep, 3);
 }
 
+static void
+canvas_drag_end (GtkGestureDrag *gesture, double offset_x, double offset_y, gpointer data);
+
 static gboolean
 canvas_animate_value (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer data)
 {
@@ -271,6 +274,9 @@ canvas_animate_value (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer da
       animation->value = animation->target;
       animation->last_time = 0;
     }
+
+  /* ensure the drag limits are respected when we zoom out */
+  canvas_drag_end (NULL, 0, 0, widget);
 
   gtk_gl_area_queue_render (GTK_GL_AREA (widget));
   return done;
@@ -375,6 +381,20 @@ canvas_drag_update (GtkGestureDrag *gesture, double offset_x, double offset_y, g
   canvas->drag_offset[0] = offset_x * canvas->scale_factor;
   canvas->drag_offset[1] = offset_y * canvas->scale_factor * -1.0;
 
+  /* clamp dragging so we can't pull the edge of the screenshot in from the edge of the screen */
+  for (int i = 0; i < 2; i++)
+    {
+      double limit = (canvas->resolution[i] * canvas->zoom_level.value - canvas->resolution[i]) / 2.0;
+      double proposed = canvas->drag_total[i] + canvas->drag_offset[i];
+      if (fabs (proposed) > limit)
+        {
+          if (proposed > 0)
+            canvas->drag_offset[i] = limit - canvas->drag_total[i];
+          else
+            canvas->drag_offset[i] = -limit - canvas->drag_total[i];
+        }
+    }
+
   gtk_gl_area_queue_render (GTK_GL_AREA (data));
 }
 
@@ -383,12 +403,12 @@ canvas_drag_end (GtkGestureDrag *gesture, double offset_x, double offset_y, gpoi
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
 
-  canvas->drag_total[0] += offset_x * canvas->scale_factor;
-  canvas->drag_total[1] += offset_y * canvas->scale_factor * -1.0;
+  canvas_drag_update (gesture, offset_x, offset_y, data);
+
+  canvas->drag_total[0] += canvas->drag_offset[0];
+  canvas->drag_total[1] += canvas->drag_offset[1];
   canvas->drag_offset[0] = 0.0;
   canvas->drag_offset[1] = 0.0;
-
-  gtk_gl_area_queue_render (GTK_GL_AREA (data));
 }
 
 static void
