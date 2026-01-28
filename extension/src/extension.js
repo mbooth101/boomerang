@@ -79,15 +79,12 @@ const Indicator = GObject.registerClass(
         style_class: 'system-status-icon',
       }));
 
-      this.connect('button-press-event', (actor, event) => {
-        return this._handleAction(actor, event);
-      });
-    }
-
-    _handleAction(_, event) {
-      if (event.get_button() === Clutter.BUTTON_PRIMARY) {
+      this._clickGesture = new Clutter.ClickGesture();
+      this._clickGesture.set_recognize_on_press(true);
+      this._clickGesture.connect('recognize', () => {
         executeBoomerang(this);
-      }
+      });
+      this.add_action(this._clickGesture);
     }
   });
 
