@@ -28,7 +28,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-async function executeBoomerang(indicator, cancellable = null) {
+async function executeBoomerang(callback, cancellable = null) {
   const proc = new Gio.Subprocess({
     argv: ['boomerang'],
     flags: Gio.SubprocessFlags.NONE,
@@ -36,8 +36,6 @@ async function executeBoomerang(indicator, cancellable = null) {
 
   let cancelId = 0;
   try {
-    indicator.add_style_class_name('screen-recording-indicator');
-
     proc.init(cancellable);
 
     if (cancellable instanceof Gio.Cancellable) {
@@ -56,35 +54,77 @@ async function executeBoomerang(indicator, cancellable = null) {
       })
     });
   } catch (e) {
-    Main.notifyError(_('Boomerang failed to launch'), e.message);
-    console.error(e);
+    // Only report an error if it wasn't the user just hitting cancel
+    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
+      Main.notifyError(_('Boomerang failed to launch'), e.message);
+      console.error(e);
+    }
   } finally {
-    indicator.remove_style_class_name('screen-recording-indicator');
     if (cancelId > 0) {
       cancellable.disconnect(cancelId);
     }
+    callback();
   }
 }
 
 const Indicator = GObject.registerClass(
   class Indicator extends PanelMenu.Button {
-    _init(statusIconUri) {
+    _init(iconUri) {
       super._init(0.5, _('Boomerang'), true);
 
-      const statusIcon = new Gio.FileIcon({
-        file: Gio.File.new_for_uri(statusIconUri),
+      this._cancellable = null;
+
+      const icon = new Gio.FileIcon({
+        file: Gio.File.new_for_uri(iconUri),
       });
-      this.add_child(new St.Icon({
-        gicon: statusIcon,
+
+      this._boomerangIcon = new St.Icon({
+        gicon: icon,
+      });
+      this._stopIcon = new St.Icon({
+        icon_name: 'screencast-stop-symbolic',
+      });
+
+      this._boomerangStatusIcon = new St.Icon({
+        gicon: icon,
         style_class: 'system-status-icon',
-      }));
+      });
+
+      this._box = new St.BoxLayout();
+      this._box.add_child(this._boomerangIcon);
+      this._box.add_child(this._stopIcon);
+
+      this.add_child(this._boomerangStatusIcon);
 
       this._clickGesture = new Clutter.ClickGesture();
       this._clickGesture.set_recognize_on_press(true);
       this._clickGesture.connect('recognize', () => {
-        executeBoomerang(this);
+        this.do_boomerang();
       });
       this.add_action(this._clickGesture);
+    }
+
+    do_boomerang() {
+      if (this._cancellable == null) {
+        this.activate_boomerang();
+        executeBoomerang(() => this.deactivate_boomerang(), this._cancellable);
+      } else {
+        this._cancellable.cancel();
+      }
+    }
+
+    activate_boomerang() {
+      this._cancellable = new Gio.Cancellable();
+      this.remove_child(this._boomerangStatusIcon);
+      this.add_style_class_name('screen-recording-indicator');
+      this.add_child(this._box);
+    }
+
+    deactivate_boomerang() {
+      this.remove_child(this._box);
+      this.remove_style_class_name('screen-recording-indicator');
+      this.add_child(this._boomerangStatusIcon);
+      this._cancellable = null;
     }
   });
 
@@ -99,7 +139,7 @@ export default class BoomerangExtension extends Extension {
 
     Main.wm.addKeybinding('activate-boomerang-key', this._settings,
       Meta.KeyBindingFlags.IGNORE_AUTOREPEAT, Shell.ActionMode.NORMAL, () => {
-        executeBoomerang(this._indicator);
+        this._indicator.do_boomerang();
       });
   }
 
