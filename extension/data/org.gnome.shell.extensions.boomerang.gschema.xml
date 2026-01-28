@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="boomerang">
+	<schema id="org.gnome.shell.extensions.boomerang" path="/org/gnome/shell/extensions/boomerang/">
+    <key name="activate-boomerang-key" type="as">
+      <default><![CDATA[["<Ctrl><Alt>b"]]]></default>
+      <summary>Activate Boomerang</summary>
+      <description>Global key binding to activate the Boomerang screenshot zoom and highlight tool.</description>
+    </key>
+  	</schema>
+</schemalist>
+

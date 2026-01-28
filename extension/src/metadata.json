@@ -1,0 +1,10 @@
+{
+  "name": "Boomerang",
+  "description": "Screenshot zoom and highlight tool.",
+  "uuid": "boomerang@matbooth.co.uk",
+  "gettext-domain": "boomerang@matbooth.co.uk",
+  "settings-schema": "org.gnome.shell.extensions.boomerang",
+  "shell-version": [ "49" ],
+  "url": "https://github.com/mbooth101/boomerang",
+  "version": "1.0"
+}
