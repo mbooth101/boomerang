@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (BoomerangCanvas, boomerang_canvas, BOOMERANG, CANVAS, GtkGLArea)
 
-void boomerang_canvas_set_filename (BoomerangCanvas *self,
+void boomerang_canvas_set_filename (BoomerangCanvas *canvas,
                                     const char *filename);
 
 G_END_DECLS

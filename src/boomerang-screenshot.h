@@ -27,12 +27,12 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (BoomerangScreenshot, boomerang_screenshot, BOOMERANG, SCREENSHOT, GObject)
 
-void boomerang_screenshot_take (BoomerangScreenshot *self,
+void boomerang_screenshot_take (BoomerangScreenshot *screenshot,
                                 GCancellable *cancellable,
                                 GAsyncReadyCallback callback,
                                 gpointer data);
 
-char *boomerang_screenshot_finish (BoomerangScreenshot *self,
+char *boomerang_screenshot_finish (BoomerangScreenshot *screenshot,
                                    GAsyncResult *result,
                                    GError **error);
 

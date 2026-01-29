@@ -162,28 +162,28 @@ boomerang_screenshot_class_init (BoomerangScreenshotClass *klass)
 }
 
 static void
-boomerang_screenshot_init (BoomerangScreenshot *self)
+boomerang_screenshot_init (BoomerangScreenshot *screenshot)
 {
 }
 
 void
-boomerang_screenshot_take (BoomerangScreenshot *self, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer data)
+boomerang_screenshot_take (BoomerangScreenshot *screenshot, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer data)
 {
-  g_return_if_fail (BOOMERANG_IS_SCREENSHOT (self));
+  g_return_if_fail (BOOMERANG_IS_SCREENSHOT (screenshot));
 
-  self->task = g_task_new (self, cancellable, callback, data);
+  screenshot->task = g_task_new (screenshot, cancellable, callback, data);
 
   // TODO pass error and check for error
-  self->conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  screenshot->conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
 
-  screenshot_take (self);
+  screenshot_take (screenshot);
 }
 
 char *
-boomerang_screenshot_finish (BoomerangScreenshot *self, GAsyncResult *result, GError **error)
+boomerang_screenshot_finish (BoomerangScreenshot *screenshot, GAsyncResult *result, GError **error)
 {
-  g_return_val_if_fail (BOOMERANG_IS_SCREENSHOT (self), NULL);
-  g_return_val_if_fail (g_task_is_valid (result, self), NULL);
+  g_return_val_if_fail (BOOMERANG_IS_SCREENSHOT (screenshot), NULL);
+  g_return_val_if_fail (g_task_is_valid (result, screenshot), NULL);
 
   return g_task_propagate_pointer (G_TASK (result), error);
 }
