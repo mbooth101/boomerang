@@ -28,6 +28,8 @@ struct _BoomerangApplication
 
   GtkWidget *window;
   GtkWidget *canvas;
+
+  int status;
 };
 
 G_DEFINE_FINAL_TYPE (BoomerangApplication, boomerang_application, GTK_TYPE_APPLICATION)
@@ -59,12 +61,14 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
       if (!filename)
         {
           g_printerr ("Error: Unable to parse URI %s\n", screenshot_uri);
+          self->status = 1;
         }
       g_free (screenshot_uri);
     }
   else
     {
       g_printerr ("Error: %s\n", error->message);
+      self->status = 1;
     }
 
   if (filename)
@@ -87,6 +91,8 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
       g_free (filename);
     }
 
+  /* releasing now that the window is shown, if we didn't present a window due to something going wrong with the
+   * screenshotting process, then the application will exit */
   g_application_release (G_APPLICATION (self));
 }
 
@@ -128,7 +134,15 @@ boomerang_application_class_init (BoomerangApplicationClass *klass)
 static void
 boomerang_application_init (BoomerangApplication *self)
 {
+  self->status = 0;
+
   g_action_map_add_action_entries (G_ACTION_MAP (self), app_actions, G_N_ELEMENTS (app_actions), self);
   gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
+}
+
+int
+boomerang_application_get_status (BoomerangApplication *self)
+{
+  return self->status;
 }
 

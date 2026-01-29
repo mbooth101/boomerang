@@ -31,6 +31,11 @@ main (int argc, char **argv)
   g_snprintf (version, sizeof (version), "%s\n", PACKAGE_VERSION);
   g_application_set_version (G_APPLICATION (app), version);
 
-  return g_application_run (G_APPLICATION (app), argc, argv);
+  int status = g_application_run (G_APPLICATION (app), argc, argv);
+  if (boomerang_application_get_status (app) != 0)
+    {
+      status = boomerang_application_get_status (app);
+    }
+  return status;
 }
 
