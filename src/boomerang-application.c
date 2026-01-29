@@ -16,6 +16,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "config.h"
+
 #include "boomerang-application.h"
 #include "boomerang-canvas.h"
 #include "boomerang-screenshot.h"
@@ -76,7 +78,7 @@ application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
       g_print ("Screenshot saved to: %s\n", filename);
 
       self->window = gtk_application_window_new (GTK_APPLICATION (self));
-      gtk_window_set_title (GTK_WINDOW (self->window), "Boomerang");
+      gtk_window_set_title (GTK_WINDOW (self->window), APPLICATION_NAME);
       gtk_window_fullscreen (GTK_WINDOW (self->window));
 
       self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);

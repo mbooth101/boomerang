@@ -4,12 +4,26 @@ project('boomerang', 'c',
   default_options: [ 'warning_level=2', 'werror=false', 'c_std=gnu11', ],
 )
 
+i18n = import('i18n')
 gnome = import('gnome')
+
 cc = meson.get_compiler('c')
 
+application_id = 'uk.co.matbooth.Boomerang'
+application_name = 'Boomerang'
+application_description = 'A screenshot zooming and highlighting tool.'
+package_name = meson.project_name()
+package_version = meson.project_version()
+package_website = 'https://github.com/mbooth101/boomerang'
+
 config_h = configuration_data()
-config_h.set_quoted('APPLICATION_ID', 'uk.co.matbooth.Boomerang')
-config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
+config_h.set_quoted('APPLICATION_ID', application_id)
+config_h.set_quoted('APPLICATION_NAME', application_name)
+config_h.set_quoted('APPLICATION_DESCRIPTION', application_description)
+config_h.set_quoted('PACKAGE_NAME', package_name)
+config_h.set_quoted('PACKAGE_VERSION', package_version)
+config_h.set_quoted('PACKAGE_WEBSITE', package_website)
+
 configure_file(output: 'config.h', configuration: config_h)
 add_project_arguments(['-I' + meson.project_build_root()], language: 'c')
 
@@ -78,5 +92,6 @@ foreach arg: test_c_args
 endforeach
 add_project_arguments(project_c_args, language: 'c')
 
+subdir('data')
 subdir('src')
 

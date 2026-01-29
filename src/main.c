@@ -28,7 +28,7 @@ main (int argc, char **argv)
                                                        "flags", G_APPLICATION_DEFAULT_FLAGS,
                                                        NULL);
   char version[80];
-  g_snprintf (version, sizeof (version), "%s\n", PACKAGE_VERSION);
+  g_snprintf (version, sizeof (version), "%s", PACKAGE_VERSION);
   g_application_set_version (G_APPLICATION (app), version);
 
   int status = g_application_run (G_APPLICATION (app), argc, argv);
