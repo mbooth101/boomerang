@@ -16,20 +16,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "config.h"
-
 #include "boomerang-application.h"
 
 int
 main (int argc, char **argv)
 {
-  g_autoptr (BoomerangApplication) app = g_object_new (BOOMERANG_TYPE_APPLICATION,
-                                                       "application-id", APPLICATION_ID,
-                                                       "flags", G_APPLICATION_DEFAULT_FLAGS,
-                                                       NULL);
-  char version[80];
-  g_snprintf (version, sizeof (version), "%s", PACKAGE_VERSION);
-  g_application_set_version (G_APPLICATION (app), version);
+  g_autoptr (BoomerangApplication) app = boomerang_application_new ();
 
   int status = g_application_run (G_APPLICATION (app), argc, argv);
   if (boomerang_application_get_status (app) != 0)

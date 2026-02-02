@@ -29,6 +29,8 @@ G_DECLARE_FINAL_TYPE (BoomerangApplication, boomerang_application, BOOMERANG, AP
 
 int boomerang_application_get_status (BoomerangApplication *self);
 
+BoomerangApplication *boomerang_application_new (void);
+
 G_END_DECLS
 
 #endif /* BOOMERANG_APPLICATION_H_ */

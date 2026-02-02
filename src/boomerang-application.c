@@ -31,6 +31,8 @@ struct _BoomerangApplication
   GtkWidget *window;
   GtkWidget *canvas;
 
+  char *filename;
+
   int status;
 };
 
@@ -49,80 +51,81 @@ static const GActionEntry app_actions[] = {
 };
 
 static void
-application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
+boomerang_application_create_canvas (BoomerangApplication *app)
 {
-  BoomerangApplication *self = BOOMERANG_APPLICATION (data);
+  g_print ("Loading screenshot: %s\n", app->filename);
+
+  app->window = gtk_application_window_new (GTK_APPLICATION (app));
+  gtk_window_set_title (GTK_WINDOW (app->window), APPLICATION_NAME);
+  gtk_window_fullscreen (GTK_WINDOW (app->window));
+
+  app->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
+  gtk_widget_set_focusable (app->canvas, TRUE);
+  gtk_widget_set_hexpand (app->canvas, TRUE);
+  gtk_widget_set_vexpand (app->canvas, TRUE);
+  gtk_window_set_child (GTK_WINDOW (app->window), app->canvas);
+  boomerang_canvas_set_filename (BOOMERANG_CANVAS (app->canvas), app->filename);
+
+  gtk_window_present (GTK_WINDOW (app->window));
+}
+
+static void
+boomerang_application_screenshot_cb (GObject *source, GAsyncResult *result, gpointer data)
+{
+  BoomerangApplication *app = BOOMERANG_APPLICATION (data);
 
   GError *error = NULL;
   char *screenshot_uri = boomerang_screenshot_finish (BOOMERANG_SCREENSHOT (source), result, &error);
 
-  char *filename = NULL;
   if (screenshot_uri)
     {
-      filename = g_filename_from_uri (screenshot_uri, NULL, NULL);
-      if (!filename)
+      app->filename = g_filename_from_uri (screenshot_uri, NULL, NULL);
+      if (!app->filename)
         {
           g_printerr ("Error: Unable to parse URI %s\n", screenshot_uri);
-          self->status = 1;
+          app->status = 1;
         }
       g_free (screenshot_uri);
     }
   else
     {
       g_printerr ("Error: %s\n", error->message);
-      self->status = 1;
+      app->status = 1;
     }
 
-  if (filename)
-    {
-      g_print ("Screenshot saved to: %s\n", filename);
-
-      self->window = gtk_application_window_new (GTK_APPLICATION (self));
-      gtk_window_set_title (GTK_WINDOW (self->window), APPLICATION_NAME);
-      gtk_window_fullscreen (GTK_WINDOW (self->window));
-
-      self->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
-      gtk_widget_set_focusable (self->canvas, TRUE);
-      gtk_widget_set_hexpand (self->canvas, TRUE);
-      gtk_widget_set_vexpand (self->canvas, TRUE);
-      gtk_window_set_child (GTK_WINDOW (self->window), self->canvas);
-      boomerang_canvas_set_filename (BOOMERANG_CANVAS (self->canvas), filename);
-
-      gtk_window_present (GTK_WINDOW (self->window));
-
-      g_free (filename);
-    }
+  if (app->filename)
+    boomerang_application_create_canvas (app);
 
   /* releasing now that the window is shown, if we didn't present a window due to something going wrong with the
    * screenshotting process, then the application will exit */
-  g_application_release (G_APPLICATION (self));
+  g_application_release (G_APPLICATION (app));
 }
 
 static void
-boomerang_application_activate (GApplication *app)
+boomerang_application_activate (GApplication *application)
 {
-  BoomerangApplication *self = BOOMERANG_APPLICATION (app);
+  BoomerangApplication *app = BOOMERANG_APPLICATION (application);
 
-  /* window won't exist until after the screenshot is taken */
-  if (self->window)
+  if (app->window)
     {
-      gtk_window_present (GTK_WINDOW (self->window));
+      gtk_window_present (GTK_WINDOW (app->window));
+      return;
     }
-}
 
-static void
-boomerang_application_startup (GApplication *app)
-{
-  G_APPLICATION_CLASS (boomerang_application_parent_class)->startup (app);
-
-  BoomerangApplication *self = BOOMERANG_APPLICATION (app);
-
-  /* hold the application until we hear back from the screenshot service to avoid showing the window without
-   * anything to render */
-  g_application_hold (G_APPLICATION (self));
-
-  self->screenshot = g_object_new (BOOMERANG_TYPE_SCREENSHOT, NULL);
-  boomerang_screenshot_take (self->screenshot, NULL, application_screenshot_cb, self);
+  /* if a filename was not passed on the command line, take a screenshot using the freedesktop portal service,
+   * otherwise show the window immediately */
+  if (!app->filename)
+    {
+      /* hold the application until we hear back from the screenshot service to avoid showing the window without
+       * anything to render */
+      g_application_hold (G_APPLICATION (app));
+      app->screenshot = g_object_new (BOOMERANG_TYPE_SCREENSHOT, NULL);
+      boomerang_screenshot_take (app->screenshot, NULL, boomerang_application_screenshot_cb, app);
+    }
+  else
+    {
+      boomerang_application_create_canvas (app);
+    }
 }
 
 static void
@@ -130,21 +133,41 @@ boomerang_application_class_init (BoomerangApplicationClass *klass)
 {
   GApplicationClass *app_class = G_APPLICATION_CLASS (klass);
   app_class->activate = boomerang_application_activate;
-  app_class->startup = boomerang_application_startup;
 }
 
 static void
-boomerang_application_init (BoomerangApplication *self)
+boomerang_application_init (BoomerangApplication *app)
 {
-  self->status = 0;
+  app->status = 0;
 
-  g_action_map_add_action_entries (G_ACTION_MAP (self), app_actions, G_N_ELEMENTS (app_actions), self);
-  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
+  g_action_map_add_action_entries (G_ACTION_MAP (app), app_actions, G_N_ELEMENTS (app_actions), app);
+  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
+
+  GOptionEntry app_options[] = {
+    { "screenshot", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, &app->filename, "Path to screenshot file", "FILENAME" },
+    G_OPTION_ENTRY_NULL
+  };
+  g_application_add_main_option_entries (G_APPLICATION (app), app_options);
 }
 
 int
-boomerang_application_get_status (BoomerangApplication *self)
+boomerang_application_get_status (BoomerangApplication *app)
 {
-  return self->status;
+  return app->status;
+}
+
+BoomerangApplication *
+boomerang_application_new (void)
+{
+  BoomerangApplication *app = g_object_new (BOOMERANG_TYPE_APPLICATION,
+                                            "application-id", APPLICATION_ID,
+                                            "flags", G_APPLICATION_DEFAULT_FLAGS,
+                                            NULL);
+
+  char version[80];
+  g_snprintf (version, sizeof (version), "%s", PACKAGE_VERSION);
+  g_application_set_version (G_APPLICATION (app), version);
+
+  return app;
 }
 

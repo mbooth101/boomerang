@@ -28,9 +28,9 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-async function executeBoomerang(callback, cancellable = null) {
+async function executeBoomerang(screenshot, callback, cancellable = null) {
   const proc = new Gio.Subprocess({
-    argv: ['boomerang'],
+    argv: ['boomerang', "-s", screenshot],
     flags: Gio.SubprocessFlags.NONE,
   });
 
@@ -104,27 +104,37 @@ const Indicator = GObject.registerClass(
       this.add_action(this._clickGesture);
     }
 
-    do_boomerang() {
+    async do_boomerang() {
       if (this._cancellable == null) {
-        this.activate_boomerang();
-        executeBoomerang(() => this.deactivate_boomerang(), this._cancellable);
+        this._show_active();
+
+        let [tempFile, stream] = Gio.File.new_tmp("boomerang-XXXXXX");
+        this._filename = tempFile.get_path();
+        const screenshot = new Shell.Screenshot();
+        await screenshot.screenshot(false, stream.get_output_stream());
+        stream.close(null);
+
+        this._cancellable = new Gio.Cancellable();
+        executeBoomerang(this._filename,
+          () => {
+            this._show_deactive();
+            this._cancellable = null;
+          }, this._cancellable);
       } else {
         this._cancellable.cancel();
       }
     }
 
-    activate_boomerang() {
-      this._cancellable = new Gio.Cancellable();
+    _show_active() {
       this.remove_child(this._boomerangStatusIcon);
       this.add_style_class_name('screen-recording-indicator');
       this.add_child(this._box);
     }
 
-    deactivate_boomerang() {
+    _show_deactive() {
       this.remove_child(this._box);
       this.remove_style_class_name('screen-recording-indicator');
       this.add_child(this._boomerangStatusIcon);
-      this._cancellable = null;
     }
   });
 
