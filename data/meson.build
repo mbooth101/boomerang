@@ -24,3 +24,10 @@ desktop_file_validate = find_program('desktop-file-validate', required:false)
 if desktop_file_validate.found()
   test('Validate .desktop', desktop_file_validate, args: [desktop_file.full_path()])
 endif
+
+# Icon file
+scalable_dir = 'icons' / 'hicolor' / 'scalable' / 'apps'
+install_data(
+  scalable_dir / ('@0@.svg').format(application_id),
+  install_dir: get_option('datadir') / scalable_dir
+)

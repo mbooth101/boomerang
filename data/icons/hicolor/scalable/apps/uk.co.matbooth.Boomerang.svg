@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 25.2.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_3"
+   x="0px"
+   y="0px"
+   viewBox="0 0 128 128"
+   style="enable-background:new 0 0 128 128;"
+   xml:space="preserve"
+   sodipodi:docname="uk.co.matbooth.Boomerang.svg"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs12" /><sodipodi:namedview
+   id="namedview12"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   inkscape:zoom="8.03125"
+   inkscape:cx="64"
+   inkscape:cy="64"
+   inkscape:window-width="2160"
+   inkscape:window-height="1281"
+   inkscape:window-x="0"
+   inkscape:window-y="0"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="g12" />
+<g
+   id="g12">
+	
+		<radialGradient
+   id="SVGID_1_"
+   cx="20.3912"
+   cy="112.5229"
+   r="86.7198"
+   gradientTransform="matrix(0.9546 -0.298 0.2136 0.684 -23.1041 41.6348)"
+   gradientUnits="userSpaceOnUse">
+		<stop
+   offset="0.3898"
+   style="stop-color:#B0BEC5"
+   id="stop1" />
+		<stop
+   offset="1"
+   style="stop-color:#B0BEC5;stop-opacity:0"
+   id="stop2" />
+	</radialGradient>
+	
+	<linearGradient
+   id="SVGID_2_"
+   gradientUnits="userSpaceOnUse"
+   x1="64.6057"
+   y1="41.2847"
+   x2="93.6188"
+   y2="-1.1041">
+		<stop
+   offset="0"
+   style="stop-color:#B0BEC5;stop-opacity:0"
+   id="stop3" />
+		<stop
+   offset="1"
+   style="stop-color:#B0BEC5"
+   id="stop4" />
+	</linearGradient>
+	
+	
+	
+	
+	
+	
+	
+	
+	<g
+   id="g13"
+   transform="matrix(1.149407,0,0,1.149407,-15.367925,-22.774495)"><path
+     style="fill:#874d36"
+     d="M 112.24,114.65 97.82,66.38 C 94.68,56.11 84.8,48.23 74.1,47.24 l -51.32,-4.5 c -3.81,-0.35 -7.38,-2.73 -7.76,-6.59 -0.28,0.73 -0.45,1.51 -0.49,2.32 -0.2,4.04 2.82,7.52 6.84,7.89 l 49.61,4.59 c 10.7,0.99 19.73,8.34 22.88,18.61 l 14.76,48.24 c 1.2,3.93 5.27,6.22 9.25,5.22 v 0 c 0.96,-0.24 1.82,-0.66 2.58,-1.2 -4.35,0.62 -7.09,-3.52 -8.21,-7.17 z"
+     id="path5" /><path
+     style="fill:#a65f3e"
+     d="M 123.51,113.89 108.56,46.34 c -1.77,-8 -8.8,-13.74 -16.99,-13.88 L 22.2,31.3 c -3.25,-0.05 -6.07,1.96 -7.17,4.85 0.38,3.86 3.99,6.86 7.8,7.21 l 51.16,4.59 c 10.7,0.99 19.73,8.34 22.88,18.61 l 14.76,48.24 c 1.12,3.65 4.48,7.63 8.83,7.02 2.44,-1.74 3.74,-4.83 3.05,-7.93 z"
+     id="path6" /><path
+     style="fill:#e2a610"
+     d="m 15.03,36.15 c -0.28,0.73 -0.45,1.51 -0.49,2.32 -0.2,4.04 2.82,7.52 6.84,7.89 l 15.84,1.47 c 0.87,-0.68 1.62,-1.72 2.22,-2.97 l 0.2,-0.45 -16.61,-1.63 c -1.9,-0.18 -3.97,-1.35 -5.4,-2.63 -1.42,-1.28 -2.6,-4 -2.6,-4 z"
+     id="path7" /><path
+     style="fill:#ffca28"
+     d="M 39.45,31.59 22.2,31.3 c -3.25,-0.05 -6.07,1.96 -7.17,4.85 0.38,3.86 3.99,6.86 7.8,7.21 l 16.61,1.49 c 0.86,-1.81 1.39,-4.11 1.39,-6.63 -0.01,-2.51 -0.53,-4.82 -1.38,-6.63 z"
+     id="path8" /><path
+     style="fill:#e2a610"
+     d="m 112.24,114.65 -4.87,-15.05 -0.33,0.23 c -1.19,0.86 -2.23,1.85 -3.01,2.97 l 4.59,15.01 c 1.2,3.93 5.27,6.22 9.25,5.22 0.96,-0.24 1.82,-0.66 2.58,-1.2 0,0 -2.85,-0.26 -5.09,-2.52 -1.39,-1.41 -2.58,-2.9 -3.12,-4.66 z"
+     id="path9" /><path
+     style="fill:#ffca28"
+     d="M 123.51,113.89 119.82,97.24 119.8,97.2 c -1.95,-0.47 -4.31,-0.51 -6.78,0 -2.17,0.45 -4.25,1.38 -6,2.63 l 4.58,14.97 c 1.12,3.65 4.48,7.63 8.83,7.02 2.47,-1.74 3.77,-4.83 3.08,-7.93 z"
+     id="path10" /><path
+     style="fill:#c87d5e"
+     d="m 24.59,33.3 c -2.08,0.02 -3.71,0.72 -3.68,2.01 0.03,1.22 0.41,2.4 4.45,2.37 l 69.46,-0.46 c 0.71,0 0.89,-0.98 0.23,-1.25 -1.48,-0.6 -3.84,-1.19 -7.37,-1.23 C 80.49,34.66 27.41,33.27 24.59,33.3 Z"
+     id="path11" /><path
+     style="fill:#ffe36c"
+     d="m 40.79,37.58 c -0.05,-1.41 -0.26,-2.74 -0.6,-3.94 -8.34,-0.2 -14.67,-0.34 -15.59,-0.33 -2.08,0.02 -3.71,0.72 -3.68,2.01 0.03,1.22 0.41,2.4 4.45,2.37 z"
+     id="path12" /></g>
+</g>
+</svg>
