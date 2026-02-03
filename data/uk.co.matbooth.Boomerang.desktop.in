@@ -1,11 +1,11 @@
 [Desktop Entry]
-Name=@APPLICATION_NAME@
-Comment=@APPLICATION_DESCRIPTION@
+Name=Boomerang
+Comment=A screenshot zooming and highlighting tool
 Exec=@PACKAGE_NAME@
 Icon=@APPLICATION_ID@
 Terminal=false
 Type=Application
 Categories=Utility;
-Keywords=GTK;screenshot;zoom;flashlight;highlight;
+Keywords=screenshot;zoom;highlight;flashlight;
 StartupNotify=true
 DBusActivatable=false

@@ -16,11 +16,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "config.h"
+#include <glib/gi18n.h>
+
 #include "boomerang-application.h"
 
 int
 main (int argc, char **argv)
 {
+  bindtextdomain (GETTEXT_DOMAIN, PACKAGE_LOCALE_DIR);
+  bind_textdomain_codeset (GETTEXT_DOMAIN, "UTF-8");
+  textdomain (GETTEXT_DOMAIN);
+
   g_autoptr (BoomerangApplication) app = boomerang_application_new ();
 
   int status = g_application_run (G_APPLICATION (app), argc, argv);

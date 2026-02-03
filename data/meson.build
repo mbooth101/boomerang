@@ -1,8 +1,6 @@
 # Desktop file
 desktop_conf = configuration_data()
 desktop_conf.set('APPLICATION_ID', application_id)
-desktop_conf.set('APPLICATION_NAME', application_name)
-desktop_conf.set('APPLICATION_DESCRIPTION', application_description)
 desktop_conf.set('PACKAGE_NAME', package_name)
 
 desktop_file_configured = configure_file(

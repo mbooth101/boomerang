@@ -1,0 +1,43 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the boomerang package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: boomerang\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-03 23:49+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: data/uk.co.matbooth.Boomerang.desktop.in:2 extension/src/extension.js:73
+#: src/boomerang-application.c:60
+msgid "Boomerang"
+msgstr ""
+
+#: data/uk.co.matbooth.Boomerang.desktop.in:3
+msgid "A screenshot zooming and highlighting tool"
+msgstr ""
+
+#: data/uk.co.matbooth.Boomerang.desktop.in:9
+msgid "screenshot;zoom;highlight;flashlight;"
+msgstr ""
+
+#: extension/src/extension.js:59
+msgid "Boomerang failed to launch"
+msgstr ""
+
+#: src/boomerang-application.c:148
+msgid "Path to the screenshot file"
+msgstr ""
+
+#: src/boomerang-application.c:148
+msgid "FILENAME"
+msgstr ""

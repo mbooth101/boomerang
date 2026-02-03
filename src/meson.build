@@ -17,7 +17,7 @@ boomerang_deps = [
 
 m_dep = cc.find_library('m', required : false)
 
-executable('boomerang', boomerang_sources,
+executable(package_name, boomerang_sources,
   dependencies: [ boomerang_deps, m_dep ],
   install: true,
 )

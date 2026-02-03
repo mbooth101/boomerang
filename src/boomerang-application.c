@@ -17,6 +17,7 @@
  */
 
 #include "config.h"
+#include <glib/gi18n.h>
 
 #include "boomerang-application.h"
 #include "boomerang-canvas.h"
@@ -56,7 +57,7 @@ boomerang_application_create_canvas (BoomerangApplication *app)
   g_print ("Loading screenshot: %s\n", app->filename);
 
   app->window = gtk_application_window_new (GTK_APPLICATION (app));
-  gtk_window_set_title (GTK_WINDOW (app->window), APPLICATION_NAME);
+  gtk_window_set_title (GTK_WINDOW (app->window), _ ("Boomerang"));
   gtk_window_fullscreen (GTK_WINDOW (app->window));
 
   app->canvas = g_object_new (BOOMERANG_TYPE_CANVAS, NULL);
@@ -144,7 +145,7 @@ boomerang_application_init (BoomerangApplication *app)
   gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
 
   GOptionEntry app_options[] = {
-    { "screenshot", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, &app->filename, "Path to screenshot file", "FILENAME" },
+    { "screenshot", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, &app->filename, _ ("Path to the screenshot file"), _ ("FILENAME") },
     G_OPTION_ENTRY_NULL
   };
   g_application_add_main_option_entries (G_APPLICATION (app), app_options);

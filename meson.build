@@ -10,19 +10,20 @@ gnome = import('gnome')
 cc = meson.get_compiler('c')
 
 application_id = 'uk.co.matbooth.Boomerang'
-application_name = 'Boomerang'
-application_description = 'A screenshot zooming and highlighting tool.'
+extension_uuid = 'boomerang@matbooth.co.uk'
+gettext_domain = meson.project_name()
 package_name = meson.project_name()
 package_version = meson.project_version()
 package_website = 'https://github.com/mbooth101/boomerang'
+package_localedir = get_option('prefix') / get_option('datadir') / 'locale'
 
 config_h = configuration_data()
 config_h.set_quoted('APPLICATION_ID', application_id)
-config_h.set_quoted('APPLICATION_NAME', application_name)
-config_h.set_quoted('APPLICATION_DESCRIPTION', application_description)
+config_h.set_quoted('GETTEXT_DOMAIN', gettext_domain)
 config_h.set_quoted('PACKAGE_NAME', package_name)
 config_h.set_quoted('PACKAGE_VERSION', package_version)
 config_h.set_quoted('PACKAGE_WEBSITE', package_website)
+config_h.set_quoted('PACKAGE_LOCALE_DIR',  package_localedir)
 
 configure_file(output: 'config.h', configuration: config_h)
 add_project_arguments(['-I' + meson.project_build_root()], language: 'c')
@@ -66,6 +67,7 @@ foreach arg: test_c_args
 endforeach
 add_project_arguments(project_c_args, language: 'c')
 
+subdir('po')
 subdir('data')
 subdir('src')
 subdir('extension')

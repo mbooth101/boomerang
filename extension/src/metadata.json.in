@@ -1,0 +1,10 @@
+{
+  "name": "Boomerang",
+  "description": "A screenshot zooming and highlighting tool",
+  "uuid": "@EXTENSION_UUID@",
+  "gettext-domain": "@GETTEXT_DOMAIN@",
+  "settings-schema": "org.gnome.shell.extensions.@PACKAGE_NAME@",
+  "shell-version": [ "49" ],
+  "url": "@PACKAGE_WEBSITE@",
+  "version": "@PACKAGE_VERSION@"
+}

@@ -1,0 +1,5 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/uk.co.matbooth.Boomerang.desktop.in
+extension/src/extension.js
+src/boomerang-application.c
