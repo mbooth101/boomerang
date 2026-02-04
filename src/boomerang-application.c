@@ -165,9 +165,11 @@ boomerang_application_new (void)
                                             "flags", G_APPLICATION_DEFAULT_FLAGS,
                                             NULL);
 
+#if GLIB_CHECK_VERSION(2, 80, 0)
   char version[80];
   g_snprintf (version, sizeof (version), "%s", PACKAGE_VERSION);
   g_application_set_version (G_APPLICATION (app), version);
+#endif
 
   return app;
 }
