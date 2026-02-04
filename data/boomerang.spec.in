@@ -1,0 +1,60 @@
+%global app_id @APPLICATION_ID@
+%global gettext @GETTEXT_DOMAIN@
+%global uuid @EXTENSION_UUID@
+%global gittag v%{version}
+
+Name:           @PACKAGE_NAME@
+Version:        @PACKAGE_VERSION@
+Release:        %{autorelease}
+Summary:        A screenshot zooming and highlighting tool
+
+License:        GPL-3.0-or-later
+URL:            https://github.com/mbooth101/boomerang
+Source:         https://github.com/mbooth101/boomerang/archive/%{gittag}.tar.gz
+
+BuildRequires:  meson
+BuildRequires:  gcc
+BuildRequires:  gettext
+BuildRequires:  intltool
+BuildRequires:  desktop-file-utils
+BuildRequires:  pkgconfig(appstream-glib)
+BuildRequires:  pkgconfig(epoxy)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(gobject-2.0)
+BuildRequires:  pkgconfig(gio-2.0)
+BuildRequires:  pkgconfig(gtk4)
+
+# For gnome shell extension
+Recommends:     gnome-shell >= 45.0
+Recommends:     hicolor-icon-theme
+
+%description
+%{summary}
+
+%prep
+%autosetup -n %{name}-%{version}
+
+%build
+%meson
+%meson_build
+
+%install
+%meson_install
+
+%find_lang %{gettext}
+
+%check
+%meson_test
+
+%files -f %{gettext}.lang
+%doc README.md
+%license COPYING
+%{_bindir}/%{name}
+%{_datadir}/metainfo/%{app_id}.metainfo.xml
+%{_datadir}/applications/%{app_id}.desktop
+%{_datadir}/gnome-shell/extensions/%{uuid}/
+%{_datadir}/icons/hicolor/*/apps/*
+%{_datadir}/glib-2.0/schemas/*
+
+%changelog
+%autochangelog

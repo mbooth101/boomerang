@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Mat Booth -->
+<component type="desktop-application">
+  <id>@APPLICATION_ID@</id>
+  <name>Boomerang</name>
+  <summary>A screenshot zooming and highlighting tool</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+
+  <description>
+    <p>Boomerang is a utility for presenting or giving live demonstrations that allows you to zoom in on, and highlight, areas of your screen.</p>
+  </description>
+
+  <categories>
+    <category>Utility</category>
+  </categories>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/mbooth101/boomerang/refs/heads/main/images/screenshot.png</image>
+      <caption>Zoom and flashlight function</caption>
+    </screenshot>
+  </screenshots>
+
+  <developer id="uk.co.matbooth">
+    <name translate="no">Mat Booth</name>
+  </developer>
+  <update_contact>mat.booth_AT_gmail.com</update_contact>
+  <translation type="gettext">@GETTEXT_DOMAIN@</translation>
+  <launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
+  <content_rating type="oars-1.1" />
+
+  <url type="homepage">https://github.com/mbooth101/boomerang</url>
+  <url type="bugtracker">https://github.com/mbooth101/boomerang/issues</url>
+  <url type="vcs-browser">https://github.com/mbooth101/boomerang</url>
+
+  <releases>
+    <release version="1.0.0" date="2026-01-01">
+      <description translate="no">
+        <p>First release of Boomerang</p>
+      </description>
+    </release>
+  </releases>
+</component>
+

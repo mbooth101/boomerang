@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boomerang\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-03 23:49+0000\n"
+"POT-Creation-Date: 2026-02-04 15:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,29 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: data/uk.co.matbooth.Boomerang.desktop.in:2 extension/src/extension.js:73
-#: src/boomerang-application.c:60
+#: data/uk.co.matbooth.Boomerang.desktop.in:2
+#: data/uk.co.matbooth.Boomerang.metainfo.xml.in:5
+#: extension/src/extension.js:73 src/boomerang-application.c:60
 msgid "Boomerang"
 msgstr ""
 
 #: data/uk.co.matbooth.Boomerang.desktop.in:3
+#: data/uk.co.matbooth.Boomerang.metainfo.xml.in:6
 msgid "A screenshot zooming and highlighting tool"
 msgstr ""
 
 #: data/uk.co.matbooth.Boomerang.desktop.in:9
 msgid "screenshot;zoom;highlight;flashlight;"
+msgstr ""
+
+#: data/uk.co.matbooth.Boomerang.metainfo.xml.in:12
+msgid ""
+"Boomerang is a utility for presenting or giving live demonstrations that "
+"allows you to zoom in on, and highlight, areas of your screen."
+msgstr ""
+
+#: data/uk.co.matbooth.Boomerang.metainfo.xml.in:22
+msgid "Zoom and flashlight function"
 msgstr ""
 
 #: extension/src/extension.js:59
