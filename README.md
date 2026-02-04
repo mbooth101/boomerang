@@ -1,6 +1,10 @@
-# Boomerang
+# ![Boomerang](images/boomerang-logo.png)
 
-A description of this project.
+Boomerang is a screenshot zooming and highlighting tool heavily inspired by [Boomer](https://github.com/tsoding/boomer), a tool written by youtuber and livestreamer [Tsoding](https://www.youtube.com/tsoding) for highlighting parts of his screen during coding demonstrations.
+
+Boomer is reliant on X11 however, which is going the way of the Dodo, so the goal with Boomerang is to reimplement a Boomer-like tool for Wayland based desktops. My primary support targets are Sway and Gnome, but it should also work on any system that supports the XDG Desktop Portal specification for screenshots and I am happy to merge patches to improve support for other Wayland based desktop environments.
+
+It is a non-goal of Boomerang to *explicitly* support X11 based desktop environments -- in those cases, you should continue to use Tsoding's Boomer tool.
 
 ## Building
 
