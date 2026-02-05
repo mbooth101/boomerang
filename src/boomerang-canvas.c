@@ -98,8 +98,7 @@ create_shader (GLenum shader_type, const char *shader_path, GError **error)
 
       char *buffer = g_malloc (log_len + 1);
       glGetShaderInfoLog (shader, log_len, NULL, buffer);
-      g_set_error (error, GDK_GL_ERROR, GDK_GL_ERROR_COMPILATION_FAILED,
-                   "Compilation error in %s shader:\n%s",
+      g_set_error (error, GDK_GL_ERROR, GDK_GL_ERROR_COMPILATION_FAILED, "Compilation error in %s shader:\n%s",
                    shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment", buffer);
       g_free (buffer);
 
@@ -140,8 +139,7 @@ create_program (const char *vertex_path, const char *fragment_path, GError **err
 
       char *buffer = g_malloc (log_len + 1);
       glGetProgramInfoLog (program, log_len, NULL, buffer);
-      g_set_error (error, GDK_GL_ERROR, GDK_GL_ERROR_LINK_FAILED,
-                   "Linkage error in shader program:\n%s", buffer);
+      g_set_error (error, GDK_GL_ERROR, GDK_GL_ERROR_LINK_FAILED, "Linkage error in shader program:\n%s", buffer);
       g_free (buffer);
 
       glDeleteShader (vertex);
@@ -195,8 +193,8 @@ init_rendering (GtkWidget *widget, GError **error)
 
   canvas->flashlight_zoom = false;
   canvas->flashlight_enabled = 0;
-  canvas->flashlight_radius = (Animatable) { .value = 0.3, .start = 0.3, .target = 0.3 };
-  canvas->zoom_level = (Animatable) { .value = 1.0, .start = 1.0, .target = 1.0 };
+  canvas->flashlight_radius = (Animatable){ .value = 0.3, .start = 0.3, .target = 0.3 };
+  canvas->zoom_level = (Animatable){ .value = 1.0, .start = 1.0, .target = 1.0 };
 
   /* initialise shader program */
 
@@ -225,8 +223,8 @@ init_rendering (GtkWidget *widget, GError **error)
   GLint poscoord = glGetAttribLocation (canvas->program, "posCoord");
   GLint texcoord = glGetAttribLocation (canvas->program, "texCoord");
   glBindVertexArray (canvas->vao);
-  glVertexAttribPointer (poscoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 0);
-  glVertexAttribPointer (texcoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *) 8);
+  glVertexAttribPointer (poscoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *)0);
+  glVertexAttribPointer (texcoord, 2, GL_FLOAT, false, 4 * sizeof (GLfloat), (void *)8);
   glEnableVertexAttribArray (poscoord);
   glEnableVertexAttribArray (texcoord);
 }
@@ -238,13 +236,12 @@ ease_out_cubic (double timestep)
   return 1 - pow (1 - timestep, 3);
 }
 
-static void
-canvas_drag_end (GtkGestureDrag *gesture, double offset_x, double offset_y, gpointer data);
+static void canvas_drag_end (GtkGestureDrag *gesture, double offset_x, double offset_y, gpointer data);
 
 static gboolean
 canvas_animate_value (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer data)
 {
-  Animatable *animation = (Animatable *) data;
+  Animatable *animation = (Animatable *)data;
 
   gboolean done = G_SOURCE_REMOVE;
 
@@ -285,7 +282,7 @@ canvas_animate_value (GtkWidget *widget, GdkFrameClock *frame_clock, gpointer da
 static void
 canvas_animate_value_end (gpointer data)
 {
-  Animatable *animation = (Animatable *) data;
+  Animatable *animation = (Animatable *)data;
   animation->id = 0;
 }
 
@@ -310,8 +307,8 @@ canvas_zoom (BoomerangCanvas *canvas, int direction)
 
   if (!animation->id && animation->target != animation->start)
     {
-      animation->id = gtk_widget_add_tick_callback (
-          GTK_WIDGET (canvas), canvas_animate_value, animation, canvas_animate_value_end);
+      animation->id = gtk_widget_add_tick_callback (GTK_WIDGET (canvas), canvas_animate_value, animation,
+                                                    canvas_animate_value_end);
     }
 }
 
@@ -327,7 +324,8 @@ canvas_scroll (GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpo
 }
 
 static void
-canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer data)
+canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state,
+                    gpointer data)
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
 
@@ -350,7 +348,8 @@ canvas_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keyco
 }
 
 static void
-canvas_key_released (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer data)
+canvas_key_released (GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state,
+                     gpointer data)
 {
   BoomerangCanvas *canvas = BOOMERANG_CANVAS (data);
 
@@ -471,7 +470,7 @@ canvas_resize (GtkGLArea *widget, int width, int height)
    * and therefore the dimensions passed into this function */
   canvas->scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (widget));
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  glViewport (0, 0, (GLint)width, (GLint)height);
 
   /* compute an orthographic projection */
   GLfloat left = -1.0f;
@@ -517,7 +516,8 @@ canvas_render (GtkGLArea *widget, GdkGLContext *context)
   glUniform2f (resolution_loc, canvas->resolution[0], canvas->resolution[1]);
 
   GLint drag_pos_loc = glGetUniformLocation (canvas->program, "dragPosition");
-  glUniform2f (drag_pos_loc, canvas->drag_total[0] + canvas->drag_offset[0], canvas->drag_total[1] + canvas->drag_offset[1]);
+  glUniform2f (drag_pos_loc, canvas->drag_total[0] + canvas->drag_offset[0],
+               canvas->drag_total[1] + canvas->drag_offset[1]);
 
   GLint zoom_level_loc = glGetUniformLocation (canvas->program, "zoomLevel");
   glUniform1f (zoom_level_loc, canvas->zoom_level.value);

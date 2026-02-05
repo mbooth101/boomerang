@@ -49,7 +49,8 @@ screenshot_cleanup (BoomerangScreenshot *bs)
 }
 
 static void
-screenshot_take_response_cb (GDBusConnection *bus, const char *sender_name, const char *object_path, const char *interface_name, const char *signal_name, GVariant *parameters, gpointer data)
+screenshot_take_response_cb (GDBusConnection *bus, const char *sender_name, const char *object_path,
+                             const char *interface_name, const char *signal_name, GVariant *parameters, gpointer data)
 {
   BoomerangScreenshot *bs = BOOMERANG_SCREENSHOT (data);
 
@@ -83,12 +84,8 @@ screenshot_cancelled_cb (GCancellable *cancellable, gpointer data)
   BoomerangScreenshot *bs = BOOMERANG_SCREENSHOT (data);
 
   /* cancel the in-progress screenshot request, a response signal will not be sent */
-  g_dbus_connection_call (bs->conn, PORTAL_BUS,
-                          bs->object_path,
-                          "org.freedesktop.portal.Request",
-                          "Close", NULL, NULL,
-                          G_DBUS_CALL_FLAGS_NONE, -1,
-                          NULL, NULL, NULL);
+  g_dbus_connection_call (bs->conn, PORTAL_BUS, bs->object_path, "org.freedesktop.portal.Request", "Close", NULL, NULL,
+                          G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL, NULL);
 
   g_task_return_new_error (bs->task, G_IO_ERROR, G_IO_ERROR_CANCELLED, "Screenshot taking was cancelled");
 
@@ -125,15 +122,9 @@ screenshot_take (BoomerangScreenshot *self)
   self->object_path = g_strconcat ("/org/freedesktop/portal/desktop/request/", sender, "/", token, NULL);
 
   /* subscribe to the request response signal on the object path computed above */
-  self->signal_id = g_dbus_connection_signal_subscribe (self->conn, PORTAL_BUS,
-                                                        "org.freedesktop.portal.Request",
-                                                        "Response",
-                                                        self->object_path,
-                                                        NULL,
-                                                        G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
-                                                        screenshot_take_response_cb,
-                                                        self,
-                                                        NULL);
+  self->signal_id = g_dbus_connection_signal_subscribe (
+      self->conn, PORTAL_BUS, "org.freedesktop.portal.Request", "Response", self->object_path, NULL,
+      G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE, screenshot_take_response_cb, self, NULL);
 
   /* register cancellation callback */
   GCancellable *cancellable = g_task_get_cancellable (self->task);
@@ -148,12 +139,9 @@ screenshot_take (BoomerangScreenshot *self)
   g_variant_builder_unref (builder);
 
   /* https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html */
-  g_dbus_connection_call (self->conn, PORTAL_BUS,
-                          "/org/freedesktop/portal/desktop",
-                          "org.freedesktop.portal.Screenshot",
-                          "Screenshot", params, G_VARIANT_TYPE ("(o)"),
-                          G_DBUS_CALL_FLAGS_NONE, -1,
-                          NULL, screenshot_take_cb, self);
+  g_dbus_connection_call (self->conn, PORTAL_BUS, "/org/freedesktop/portal/desktop",
+                          "org.freedesktop.portal.Screenshot", "Screenshot", params, G_VARIANT_TYPE ("(o)"),
+                          G_DBUS_CALL_FLAGS_NONE, -1, NULL, screenshot_take_cb, self);
 }
 
 static void
@@ -167,7 +155,8 @@ boomerang_screenshot_init (BoomerangScreenshot *screenshot)
 }
 
 void
-boomerang_screenshot_take (BoomerangScreenshot *screenshot, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer data)
+boomerang_screenshot_take (BoomerangScreenshot *screenshot, GCancellable *cancellable, GAsyncReadyCallback callback,
+                           gpointer data)
 {
   g_return_if_fail (BOOMERANG_IS_SCREENSHOT (screenshot));
 

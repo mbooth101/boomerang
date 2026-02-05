@@ -142,12 +142,12 @@ boomerang_application_init (BoomerangApplication *app)
   app->status = 0;
 
   g_action_map_add_action_entries (G_ACTION_MAP (app), app_actions, G_N_ELEMENTS (app_actions), app);
-  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit", (const char *[]) { "<Control>q", "Escape", NULL });
+  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit",
+                                         (const char *[]){ "<Control>q", "Escape", NULL });
 
-  GOptionEntry app_options[] = {
-    { "screenshot", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, &app->filename, _ ("Path to the screenshot file"), _ ("FILENAME") },
-    G_OPTION_ENTRY_NULL
-  };
+  GOptionEntry app_options[] = { { "screenshot", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, &app->filename,
+                                   _ ("Path to the screenshot file"), _ ("FILENAME") },
+                                 G_OPTION_ENTRY_NULL };
   g_application_add_main_option_entries (G_APPLICATION (app), app_options);
 }
 
@@ -160,10 +160,8 @@ boomerang_application_get_status (BoomerangApplication *app)
 BoomerangApplication *
 boomerang_application_new (void)
 {
-  BoomerangApplication *app = g_object_new (BOOMERANG_TYPE_APPLICATION,
-                                            "application-id", APPLICATION_ID,
-                                            "flags", G_APPLICATION_DEFAULT_FLAGS,
-                                            NULL);
+  BoomerangApplication *app = g_object_new (BOOMERANG_TYPE_APPLICATION, "application-id", APPLICATION_ID, "flags",
+                                            G_APPLICATION_DEFAULT_FLAGS, NULL);
 
 #if GLIB_CHECK_VERSION(2, 80, 0)
   char version[80];
